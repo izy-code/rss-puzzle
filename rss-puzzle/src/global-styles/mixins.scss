@@ -1,0 +1,25 @@
+@use "variables" as *;
+
+@mixin font($font_name, $file_name, $weight, $style) {
+  @font-face {
+    font-family: $font_name;
+    font-style: $style;
+    font-weight: $weight;
+    src:
+      url("./assets/fonts/#{$file_name}.woff2") format("woff2"),
+      url("./assets/fonts/#{$file_name}.woff") format("woff");
+    font-display: swap;
+  }
+}
+
+@mixin media-tablet {
+  @media (min-width: $width-tablet) {
+    @content;
+  }
+}
+
+@mixin media-hover {
+  @media (hover: hover) {
+    @content;
+  }
+}

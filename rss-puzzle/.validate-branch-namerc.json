@@ -1,0 +1,4 @@
+{
+  "pattern": "^(init|feat|fix|refactor|chore|docs)/RSS-PZ-\\d+_[a-zA-Z0-9]+$",
+  "errorMsg": "Branch name is not valid!"
+}
