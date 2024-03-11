@@ -1,0 +1,22 @@
+@use "../../../global-styles/forward" as *;
+
+.login-page {
+  background-color: $color-iguana-green;
+}
+
+.login-page__main {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  justify-content: center;
+  min-width: 400px;
+  padding: 40px;
+  background-color: $color-anti-flash-white;
+  border-radius: 30px;
+}
+
+.login-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}

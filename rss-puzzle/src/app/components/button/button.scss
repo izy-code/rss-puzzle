@@ -1,0 +1,41 @@
+@use "../../../global-styles/forward" as *;
+
+.button {
+  padding: 0.5em 1.2em;
+  font-family: $font-primary;
+  font-size: 1em;
+  font-weight: inherit;
+  color: $color-black-olive;
+  background-color: $color-sandy-brown;
+  border: none;
+  border-radius: 4px;
+  box-shadow:
+    0 8px 16px 0 rgb(0 0 0 / 20%),
+    0 6px 20px 0 rgb(0 0 0 / 19%);
+  cursor: pointer;
+  transition:
+    background-color 0.6s ease-out,
+    color 0.6s ease-out,
+    box-shadow 0.6s ease-out;
+
+  &:hover,
+  &:focus-visible {
+    @include media-hover {
+      background-color: $color-pastel-yellow;
+    }
+  }
+
+  &:active {
+    color: $color-black;
+    background-color: $color-chinese-bronze;
+    box-shadow: none;
+  }
+
+  &:disabled {
+    color: $color-black-olive;
+    background-color: $color-bone;
+    box-shadow: none;
+    opacity: 0.6;
+    cursor: default;
+  }
+}

@@ -1,0 +1,18 @@
+@use "../../../../global-styles/forward" as *;
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-field__input {
+  padding: 5px;
+  font-family: $font-primary;
+  font-size: 18px;
+  line-height: 150%;
+  font-weight: 400;
+  color: $color-black-olive;
+  border: 2px solid $color-granite;
+  border-radius: 4px;
+}
