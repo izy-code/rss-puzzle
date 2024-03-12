@@ -7,7 +7,7 @@
     "allowJs": true /* set to false if migration from JS to TS is not needed */,
     "verbatimModuleSyntax": true /* Remove every import/export with 'type' modifier during transpilation */,
     "resolveJsonModule": true /* allow importing JSON files as modules */,
-    "isolatedModules": true /* warns when wriiting code that can’t be correctly interpreted by a single-file transpilation process */,
+    "isolatedModules": true /* warns when writing code that can’t be correctly interpreted by a single-file transpilation process */,
     "moduleDetection": "force" /* every non-declaration file is treated as a module */,
     "useDefineForClassFields": true /* conform to ECMA standard for class field syntax */,
 

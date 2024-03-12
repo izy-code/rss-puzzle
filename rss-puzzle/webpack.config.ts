@@ -1,7 +1,7 @@
 import type { Configuration } from 'webpack';
-import type { WebpackConfig, WebpackBuildMode } from '@/config/webpack/types';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { WebpackConfig, WebpackBuildMode } from '@/config/webpack/types';
 import { buildLoaders } from '@/config/webpack/buildLoaders';
 import { buildPlugins } from '@/config/webpack/buildPlugins';
 import { buildResolvers } from '@/config/webpack/buildResolvers';
@@ -14,18 +14,16 @@ const TRANSPILATION_TARGET = 'es2015';
 
 const projectDirname = path.dirname(fileURLToPath(import.meta.url));
 
-const getConfig = (mode: WebpackBuildMode, port: number): WebpackConfig => {
-  return {
-    mode,
-    transpilationTarget: TRANSPILATION_TARGET,
-    devServerPort: port,
-    paths: {
-      faviconPath: path.join(projectDirname, 'src', 'assets', 'favicon.svg'),
-      templatePath: path.join(projectDirname, 'src', 'index.html'),
-      tsConfigPath: path.join(projectDirname, 'tsconfig.json'),
-    },
-  };
-};
+const getConfig = (mode: WebpackBuildMode, port: number): WebpackConfig => ({
+  mode,
+  transpilationTarget: TRANSPILATION_TARGET,
+  devServerPort: port,
+  paths: {
+    faviconPath: path.join(projectDirname, 'src', 'assets', 'favicon.svg'),
+    templatePath: path.join(projectDirname, 'src', 'index.html'),
+    tsConfigPath: path.join(projectDirname, 'tsconfig.json'),
+  },
+});
 
 export default (env: Record<string, string | boolean>, argv: Record<string, string>): Configuration => {
   const mode = argv.mode === 'development' ? 'development' : 'production';

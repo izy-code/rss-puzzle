@@ -14,6 +14,7 @@
     "ci:format": "npx prettier --check .",
     "lint": "npx eslint ./src",
     "lint:fix": "npx eslint --fix ./src",
+    "stylelint": "stylelint \"src/**/*.scss\"",
     "typecheck": "tsc",
     "watch": "tsx node_modules/webpack/bin/webpack --mode=development --node-env=development --watch",
     "start": "tsx node_modules/webpack/bin/webpack serve --mode=development --node-env=development",
@@ -29,6 +30,13 @@
     "not op_mini all",
     "not < 0.25%"
   ],
+  "lint-staged": {
+    "*.ts": "npm run ci:format",
+    "*.scss": "npm run stylelint"
+  },
+  "lint-prepush": {
+    "*.ts": "npm run lint"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/dotenv-webpack": "^7.0.7",
@@ -50,6 +58,8 @@
     "gh-pages": "^6.0.0",
     "html-webpack-plugin": "^5.5.1",
     "husky": "^9.0.11",
+    "lint-prepush": "^2.2.1",
+    "lint-staged": "^15.2.2",
     "mini-css-extract-plugin": "^2.7.6",
     "postcss": "^8.4.35",
     "postcss-loader": "^8.1.1",
