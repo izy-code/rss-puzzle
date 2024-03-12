@@ -3,6 +3,7 @@ import BaseComponent from '@/app/components/base-component';
 import { form, h1, main } from '@/app/components/tags';
 import ButtonComponent from '@/app/components/button/button';
 import LoginFieldComponent from './login-field/login-field';
+import LocalStorage from '@/app/utils/local-storage';
 
 enum FieldMinLength {
   NAME = 3,
@@ -19,6 +20,8 @@ export default class LoginPageComponent extends BaseComponent {
   private nameField: LoginFieldComponent;
 
   private surnameField: LoginFieldComponent;
+
+  private storage: LocalStorage;
 
   constructor() {
     super({ className: 'app-container__page login-page' });
@@ -38,10 +41,7 @@ export default class LoginPageComponent extends BaseComponent {
       className: 'login-page__submit-button button',
       textContent: 'Login',
       buttonType: 'submit',
-      clickHandler: (evt) => {
-        evt?.preventDefault();
-        this.validateFields();
-      },
+      clickHandler: this.onSubmitButtonClick,
     });
     this.submitButton.setAttribute('disabled', '');
     this.form = form(
@@ -53,6 +53,7 @@ export default class LoginPageComponent extends BaseComponent {
     this.main = main({ className: 'login-page__main' }, header, this.form);
 
     this.appendChildren([this.main]);
+    this.storage = new LocalStorage();
   }
 
   private onFieldInput(evt: Event): void {
@@ -74,7 +75,7 @@ export default class LoginPageComponent extends BaseComponent {
     }
   }
 
-  private static getValidationErrors(fieldName: string, fieldValue: string, minLength: number): string {
+  private static getFieldValidationErrors(fieldName: string, fieldValue: string, minLength: number): string {
     const validCharsRegex = /^[a-zA-Z-]*$/;
     let validationErrorsString = '';
 
@@ -93,24 +94,44 @@ export default class LoginPageComponent extends BaseComponent {
     return validationErrorsString.split(fieldName).join(`\n⦁  ${fieldName}`).trim();
   }
 
-  private validateFields(): void {
+  private areFieldsValid(): boolean {
     const nameFieldValue: string = this.nameField.getInputValue();
     const surnameFieldValue: string = this.surnameField.getInputValue();
-    const nameFieldErrors = LoginPageComponent.getValidationErrors('First Name', nameFieldValue, FieldMinLength.NAME);
-    const surnameFieldErrors = LoginPageComponent.getValidationErrors(
+
+    const nameFieldErrors = LoginPageComponent.getFieldValidationErrors(
+      'First Name',
+      nameFieldValue,
+      FieldMinLength.NAME,
+    );
+    const surnameFieldErrors = LoginPageComponent.getFieldValidationErrors(
       'Surname',
       surnameFieldValue,
       FieldMinLength.SURNAME,
     );
 
-    if (nameFieldErrors) {
-      this.nameField.setErrorText(nameFieldErrors);
-      this.nameField.addClass('login-field--error');
-    }
+    LoginPageComponent.updateFieldErrorState(this.nameField, nameFieldErrors);
+    LoginPageComponent.updateFieldErrorState(this.surnameField, surnameFieldErrors);
 
-    if (surnameFieldErrors) {
-      this.surnameField.setErrorText(surnameFieldErrors);
-      this.surnameField.addClass('login-field--error');
+    return !nameFieldErrors && !surnameFieldErrors;
+  }
+
+  private static updateFieldErrorState(field: LoginFieldComponent, errors: string): void {
+    if (errors) {
+      field.setErrorText(errors);
+      field.addClass('login-field--error');
     }
   }
+
+  private onSubmitButtonClick = (evt?: Event | undefined): void => {
+    if (evt) {
+      evt.preventDefault();
+    }
+
+    if (this.areFieldsValid()) {
+      this.storage.setField('loginData', {
+        name: this.nameField.getInputValue(),
+        surname: this.surnameField.getInputValue(),
+      });
+    }
+  };
 }
