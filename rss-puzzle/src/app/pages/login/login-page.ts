@@ -4,6 +4,11 @@ import { form, h1, main } from '@/app/components/tags';
 import ButtonComponent from '@/app/components/button/button';
 import LoginFieldComponent from './login-field/login-field';
 
+enum FieldMinLength {
+  NAME = 3,
+  SURNAME = 4,
+}
+
 export default class LoginPageComponent extends BaseComponent {
   private main: BaseComponent;
 
@@ -22,19 +27,23 @@ export default class LoginPageComponent extends BaseComponent {
 
     this.nameField = new LoginFieldComponent('First Name:');
     this.nameField.addClass('login-page__field');
-    this.nameField.setInputAttribute('autofocus', 'true');
-    this.nameField.getInputNode().addEventListener('input', this.checkInputContent.bind(this));
+    this.nameField.setInputAttribute('autofocus', '');
+    this.nameField.addListener('input', this.onFieldInput.bind(this));
 
     this.surnameField = new LoginFieldComponent('Surname:');
     this.surnameField.addClass('login-page__field');
-    this.surnameField.getInputNode().addEventListener('input', this.checkInputContent.bind(this));
+    this.surnameField.addListener('input', this.onFieldInput.bind(this));
 
     this.submitButton = ButtonComponent({
       className: 'login-page__submit-button button',
       textContent: 'Login',
       buttonType: 'submit',
+      clickHandler: (evt) => {
+        evt?.preventDefault();
+        this.validateFields();
+      },
     });
-    this.submitButton.setAttribute('disabled', 'true');
+    this.submitButton.setAttribute('disabled', '');
     this.form = form(
       { className: 'login-page__form', method: 'post' },
       this.nameField,
@@ -46,14 +55,62 @@ export default class LoginPageComponent extends BaseComponent {
     this.appendChildren([this.main]);
   }
 
-  private checkInputContent(): void {
+  private onFieldInput(evt: Event): void {
     const nameValue: string = this.nameField.getInputValue();
     const surnameValue: string = this.surnameField.getInputValue();
 
     if (nameValue && surnameValue) {
       this.submitButton.removeAttribute('disabled');
     } else {
-      this.submitButton.setAttribute('disabled', 'true');
+      this.submitButton.setAttribute('disabled', '');
+    }
+
+    if (this.nameField.getNode() === evt.currentTarget) {
+      this.nameField.setErrorText('');
+      this.nameField.removeClass('login-field--error');
+    } else {
+      this.surnameField.setErrorText('');
+      this.surnameField.removeClass('login-field--error');
+    }
+  }
+
+  private static getValidationErrors(fieldName: string, fieldValue: string, minLength: number): string {
+    const validCharsRegex = /^[a-zA-Z-]*$/;
+    let validationErrorsString = '';
+
+    if (!validCharsRegex.test(fieldValue)) {
+      validationErrorsString += `${fieldName} must contain only English letters and hyphens`;
+    }
+
+    if (fieldValue[0] !== fieldValue[0]?.toUpperCase()) {
+      validationErrorsString += `${fieldName} must start with an uppercase letter`;
+    }
+
+    if (fieldValue.length < minLength) {
+      validationErrorsString += `${fieldName} must be at least ${minLength} characters long`;
+    }
+
+    return validationErrorsString.split(fieldName).join(`\n⦁  ${fieldName}`).trim();
+  }
+
+  private validateFields(): void {
+    const nameFieldValue: string = this.nameField.getInputValue();
+    const surnameFieldValue: string = this.surnameField.getInputValue();
+    const nameFieldErrors = LoginPageComponent.getValidationErrors('First Name', nameFieldValue, FieldMinLength.NAME);
+    const surnameFieldErrors = LoginPageComponent.getValidationErrors(
+      'Surname',
+      surnameFieldValue,
+      FieldMinLength.SURNAME,
+    );
+
+    if (nameFieldErrors) {
+      this.nameField.setErrorText(nameFieldErrors);
+      this.nameField.addClass('login-field--error');
+    }
+
+    if (surnameFieldErrors) {
+      this.surnameField.setErrorText(surnameFieldErrors);
+      this.surnameField.addClass('login-field--error');
     }
   }
 }

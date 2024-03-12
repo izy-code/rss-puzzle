@@ -9,14 +9,20 @@
   flex-direction: column;
   gap: 30px;
   justify-content: center;
-  min-width: 400px;
+  min-width: 555px;
   padding: 40px;
   background-color: $color-anti-flash-white;
   border-radius: 30px;
+  box-shadow: 0 5px 10px 10px rgb(0 0 0 / 20%);
 }
 
 .login-page__form {
   display: flex;
   flex-direction: column;
   gap: 30px;
+}
+
+.login-page .login-page__submit-button {
+  font-size: 22px;
+  font-weight: 600;
 }

@@ -15,4 +15,13 @@
   color: $color-black-olive;
   border: 2px solid $color-granite;
   border-radius: 4px;
+
+  .login-field--error & {
+    border-color: $color-error;
+  }
+}
+
+.login-field__error-text {
+  white-space: pre;
+  color: $color-error;
 }

@@ -6,7 +6,7 @@ interface Props {
   className?: string;
   textContent: string;
   buttonType?: 'button' | 'submit' | 'reset';
-  clickHandler?: () => void;
+  clickHandler?: (evt?: Event) => void;
 }
 
 export default function ButtonComponent({
