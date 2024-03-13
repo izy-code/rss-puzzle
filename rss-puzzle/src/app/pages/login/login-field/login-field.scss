@@ -17,6 +17,10 @@
   border: 2px solid $color-granite;
   border-radius: 4px;
 
+  &:focus {
+    outline: 2px solid $color-granite;
+  }
+
   .login-field--error & {
     border-color: $color-error;
   }
