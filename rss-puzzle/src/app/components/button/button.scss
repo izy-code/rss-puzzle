@@ -38,4 +38,19 @@
     opacity: 0.6;
     cursor: default;
   }
+
+  &--logout {
+    background-color: $color-light-red;
+
+    &:hover,
+    &:focus-visible {
+      @include media-hover {
+        background-color: $color-red;
+      }
+    }
+
+    &:active {
+      background-color: $color-dark-red;
+    }
+  }
 }

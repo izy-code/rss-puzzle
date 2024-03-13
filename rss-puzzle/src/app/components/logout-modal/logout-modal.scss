@@ -1,0 +1,58 @@
+@use "sass:color";
+@use "../../../global-styles/forward" as *;
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background-color: color.adjust($color-black-olive, $alpha: -0.15);
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+
+  &--closed {
+    display: none;
+  }
+
+  &--opaque {
+    opacity: 1;
+  }
+}
+
+.modal__content {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-around;
+  width: 640px;
+  min-height: 300px;
+  margin: auto;
+  padding: 40px;
+  white-space: pre-line;
+  background-color: $color-bone;
+  border-radius: 30px;
+}
+
+.modal__description {
+  width: 100%;
+  margin-block: 0;
+  font-size: 32px;
+  line-height: 35px;
+  font-weight: 700;
+  text-align: center;
+  color: $color-black-olive;
+}
+
+.modal__notification {
+  margin-block: 0 20px;
+  font-size: 20px;
+}
+
+.modal__button {
+  font-size: 20px;
+  font-weight: 600;
+}

@@ -10,59 +10,66 @@ export default class App {
 
   private router: Router;
 
+  private storage: LocalStorage;
+
   constructor() {
     this.container = div({ className: 'app-container' });
-
-    const storage = new LocalStorage();
-    const routes = this.createRoutes(storage);
-
-    this.router = new Router(routes);
+    this.storage = new LocalStorage();
+    this.router = new Router(this.createRoutes());
   }
 
   public start(): void {
     document.body.append(this.container.getNode());
   }
 
-  private createRoutes(storage: LocalStorage): Route[] {
+  private createRoutes(): Route[] {
     return [
       {
         path: Pages.EMPTY,
-        handleRouteChange: (): void => {
-          import('@/app/pages/login/login-page')
-            .then(({ default: LoginPage }) => {
-              this.setPage(new LoginPage(this.router, storage));
-            })
-            .catch((error) => {
-              throw new Error(`Failed to load login module: ${error}`);
-            });
-        },
+        handleRouteChange: this.handleSwitchToLoginPage,
       },
       {
         path: Pages.LOGIN,
-        handleRouteChange: (): void => {
-          import('@/app/pages/login/login-page')
-            .then(({ default: LoginPage }) => {
-              this.setPage(new LoginPage(this.router, storage));
-            })
-            .catch((error) => {
-              throw new Error(`Failed to load login module: ${error}`);
-            });
-        },
+        handleRouteChange: this.handleSwitchToLoginPage,
       },
       {
         path: Pages.START,
-        handleRouteChange: (): void => {
-          import('@/app/pages/start/start-page')
-            .then(({ default: StartPage }) => {
-              this.setPage(new StartPage(this.router, storage));
-            })
-            .catch((error) => {
-              throw new Error(`Failed to load start page module: ${error}`);
-            });
-        },
+        handleRouteChange: this.handleSwitchToStartPage,
       },
     ];
   }
+
+  private handleSwitchToLoginPage = (): void => {
+    import('@/app/pages/login/login-page')
+      .then(({ default: LoginPage }) => {
+        const loginData = this.storage.getLoginData();
+
+        if (loginData) {
+          this.router.navigate(Pages.START);
+        } else {
+          this.setPage(new LoginPage(this.router, this.storage));
+        }
+      })
+      .catch((error) => {
+        throw new Error(`Failed to load login module: ${error}`);
+      });
+  };
+
+  private handleSwitchToStartPage = (): void => {
+    import('@/app/pages/start/start-page')
+      .then(({ default: StartPage }) => {
+        const loginData = this.storage.getLoginData();
+
+        if (!loginData) {
+          this.router.navigate(Pages.LOGIN);
+        } else {
+          this.setPage(new StartPage(this.router, this.storage, loginData));
+        }
+      })
+      .catch((error) => {
+        throw new Error(`Failed to load start page module: ${error}`);
+      });
+  };
 
   private setPage(pageComponent: BaseComponent): void {
     this.container.removeNodeChildren();

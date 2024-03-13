@@ -13,9 +13,9 @@ enum FieldMinLength {
 }
 
 export default class LoginPageComponent extends BaseComponent {
-  private main: BaseComponent;
+  private router: Router;
 
-  private form: BaseComponent;
+  private storage: LocalStorage;
 
   private submitButton: BaseComponent<HTMLButtonElement>;
 
@@ -23,14 +23,11 @@ export default class LoginPageComponent extends BaseComponent {
 
   private surnameField: LoginFieldComponent;
 
-  private storage: LocalStorage;
-
-  private router: Router;
-
   constructor(router: Router, storage: LocalStorage) {
     super({ className: 'app-container__page login-page' });
 
-    const header = h1('visually-hidden', 'Word puzzle application');
+    this.router = router;
+    this.storage = storage;
 
     this.nameField = new LoginFieldComponent('First Name:');
     this.nameField.addClass('login-page__field');
@@ -48,17 +45,17 @@ export default class LoginPageComponent extends BaseComponent {
       clickHandler: this.onSubmitButtonClick,
     });
     this.submitButton.setAttribute('disabled', '');
-    this.form = form(
+
+    const headerComponent = h1('visually-hidden', 'Word puzzle application');
+    const formComponent = form(
       { className: 'login-page__form', method: 'post' },
       this.nameField,
       this.surnameField,
       this.submitButton,
     );
-    this.main = main({ className: 'login-page__main' }, header, this.form);
+    const mainComponent = main({ className: 'login-page__main' }, headerComponent, formComponent);
 
-    this.appendChildren([this.main]);
-    this.router = router;
-    this.storage = storage;
+    this.appendChildren([mainComponent]);
   }
 
   private onFieldInput(evt: Event): void {

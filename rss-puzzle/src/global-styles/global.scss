@@ -25,3 +25,7 @@ body {
   background-color: $color-iguana-green;
   background-image: url("./assets/images/puzzle-tile.png");
 }
+
+.no-scroll {
+  overflow: hidden;
+}

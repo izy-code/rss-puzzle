@@ -1,52 +1,35 @@
 import './start-page.scss';
 import BaseComponent, { type ChildrenType } from '@/app/components/base-component';
+import ButtonComponent from '@/app/components/button/button';
+import LogoutModalComponent from '@/app/components/logout-modal/logout-modal';
 import { h1, main, p, span } from '@/app/components/tags';
-import { Pages } from '@/app/router/pages';
 import type Router from '@/app/router/router';
 import type LocalStorage from '@/app/utils/local-storage';
 
 export default class StartPageComponent extends BaseComponent {
-  private main: BaseComponent | null;
+  private router: Router;
 
   private storage: LocalStorage;
 
-  private router: Router;
+  private modal: LogoutModalComponent;
 
-  constructor(router: Router, storage: LocalStorage) {
+  constructor(router: Router, storage: LocalStorage, loginData: { name: string; surname: string }) {
     super({ className: 'app-container__page start-page' });
 
     this.router = router;
     this.storage = storage;
-    this.main = null;
+    this.modal = new LogoutModalComponent(router, storage);
 
-    const loginData = this.storage.getLoginData();
+    const mainComponent = main(
+      { className: 'start-page__main' },
+      ...this.createMainComponents(loginData.name, loginData.surname),
+    );
 
-    if (!loginData) {
-      this.router.navigate(Pages.LOGIN);
-    } else {
-      this.main = main(
-        { className: 'start-page__main' },
-        ...StartPageComponent.createMainComponents(loginData.name, loginData.surname),
-      );
-      this.appendChildren([this.main]);
-    }
+    this.appendChildren([mainComponent, this.modal]);
   }
 
-  private static createMainComponents(name: string, surname: string): ChildrenType[] {
+  private createMainComponents(name: string, surname: string): ChildrenType[] {
     const header = h1('start-page__title', 'Word puzzle');
-    const descriptionPart1 = p({
-      className: 'start-page__description',
-      textContent:
-        'Immerse yourself in a captivating experience where you piece together phrases by clicking and dragging words on puzzle-shaped cards.',
-    });
-    const descriptionPart2 = p({
-      className: 'start-page__description',
-      textContent: 'Complete the puzzle to reveal the full picture and triumph in each round!',
-    });
-    const descriptionPart3 = p({
-      className: 'start-page__description',
-      textContent: 'Customize your experience for seamless gameplay.',
-    });
     const user = span({
       className: 'start-page__user',
       textContent: `${name} ${surname}`,
@@ -62,7 +45,39 @@ export default class StartPageComponent extends BaseComponent {
       user,
       greetingEnding,
     );
+    const logoutText = p({
+      className: 'start-page__logout-text',
+      textContent: `If you wish to log out, please press the button below.`,
+    });
+    const logoutButton = ButtonComponent({
+      className: 'start-page__logout-button button button--logout',
+      textContent: 'Logout',
+      buttonType: 'button',
+      clickHandler: this.onLogoutButtonClick,
+    });
 
-    return [header, greeting, descriptionPart1, descriptionPart2, descriptionPart3];
+    return [header, greeting, ...StartPageComponent.createDescriptionComponents(), logoutText, logoutButton];
   }
+
+  private static createDescriptionComponents(): ChildrenType[] {
+    const descriptionPart1 = p({
+      className: 'start-page__description',
+      textContent:
+        'Immerse yourself in a captivating experience where you piece together phrases by clicking and dragging words on puzzle-shaped cards.',
+    });
+    const descriptionPart2 = p({
+      className: 'start-page__description',
+      textContent: 'Complete the puzzle to reveal the full picture and triumph in each round!',
+    });
+    const descriptionPart3 = p({
+      className: 'start-page__description',
+      textContent: 'Customize your experience for seamless gameplay.',
+    });
+
+    return [descriptionPart1, descriptionPart2, descriptionPart3];
+  }
+
+  private onLogoutButtonClick = (): void => {
+    this.modal.showModal();
+  };
 }

@@ -22,12 +22,12 @@
   }
 
   .login-field--error & {
-    border-color: $color-error;
+    border-color: $color-red;
   }
 }
 
 .login-field__error-text {
   font-size: 18px;
   white-space: pre;
-  color: $color-error;
+  color: $color-red;
 }

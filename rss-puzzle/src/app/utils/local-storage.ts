@@ -21,6 +21,11 @@ export default class LocalStorage {
     this.saveData();
   }
 
+  public deleteField(key: string): void {
+    this.dataMap.delete(key);
+    this.saveData();
+  }
+
   public getLoginData(): { name: string; surname: string } | null {
     const loginData = this.getField('loginData');
 

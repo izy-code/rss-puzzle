@@ -40,18 +40,18 @@ export default class Router {
     const validRoute = this.validRoutes.find((route) => String(route.path) === newRoutePath);
 
     if (!validRoute) {
-      this.redirectToNotFoundPage();
+      this.redirectToLoginPage();
       return;
     }
 
     validRoute.handleRouteChange(newUrlData);
   }
 
-  private redirectToNotFoundPage(): void {
-    const notFoundPageRoute = this.validRoutes.find((route) => route.path === Pages.NOT_FOUND);
+  private redirectToLoginPage(): void {
+    const loginPageRoute = this.validRoutes.find((route) => route.path === Pages.LOGIN);
 
-    if (notFoundPageRoute) {
-      this.navigate(notFoundPageRoute.path);
+    if (loginPageRoute) {
+      this.navigate(loginPageRoute.path);
     }
   }
 }
