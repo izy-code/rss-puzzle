@@ -36,6 +36,10 @@ export default class App {
         path: Pages.START,
         handleRouteChange: this.handleSwitchToStartPage,
       },
+      {
+        path: Pages.PUZZLE,
+        handleRouteChange: this.handlePuzzleToStartPage,
+      },
     ];
   }
 
@@ -68,6 +72,22 @@ export default class App {
       })
       .catch((error) => {
         throw new Error(`Failed to load start page module: ${error}`);
+      });
+  };
+
+  private handlePuzzleToStartPage = (): void => {
+    import('@/app/pages/puzzle/puzzle-page')
+      .then(({ default: PuzzlePage }) => {
+        const loginData = this.storage.getLoginData();
+
+        if (!loginData) {
+          this.router.navigate(Pages.LOGIN);
+        } else {
+          this.setPage(new PuzzlePage(this.router, this.storage));
+        }
+      })
+      .catch((error) => {
+        throw new Error(`Failed to load puzzle page module: ${error}`);
       });
   };
 

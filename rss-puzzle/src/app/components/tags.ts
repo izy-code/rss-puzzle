@@ -1,5 +1,8 @@
 import BaseComponent, { type ElementFnProps, type ChildrenType } from './base-component';
 
+export const header = (props: ElementFnProps, ...children: ChildrenType[]): BaseComponent =>
+  new BaseComponent({ ...props, tag: 'header' }, ...children);
+
 export const main = (props: ElementFnProps, ...children: ChildrenType[]): BaseComponent =>
   new BaseComponent({ ...props, tag: 'main' }, ...children);
 

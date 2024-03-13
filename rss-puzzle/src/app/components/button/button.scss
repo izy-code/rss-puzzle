@@ -53,4 +53,19 @@
       background-color: $color-dark-red;
     }
   }
+
+  &--confirm {
+    background-color: $color-iguana-green;
+
+    &:hover,
+    &:focus-visible {
+      @include media-hover {
+        background-color: $color-green;
+      }
+    }
+
+    &:active {
+      background-color: $color-dark-green;
+    }
+  }
 }
