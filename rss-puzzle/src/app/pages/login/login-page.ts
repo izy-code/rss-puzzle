@@ -3,7 +3,9 @@ import BaseComponent from '@/app/components/base-component';
 import { form, h1, main } from '@/app/components/tags';
 import ButtonComponent from '@/app/components/button/button';
 import LoginFieldComponent from './login-field/login-field';
-import LocalStorage from '@/app/utils/local-storage';
+import type LocalStorage from '@/app/utils/local-storage';
+import type Router from '@/app/router/router';
+import { Pages } from '@/app/router/pages';
 
 enum FieldMinLength {
   NAME = 3,
@@ -23,7 +25,9 @@ export default class LoginPageComponent extends BaseComponent {
 
   private storage: LocalStorage;
 
-  constructor() {
+  private router: Router;
+
+  constructor(router: Router, storage: LocalStorage) {
     super({ className: 'app-container__page login-page' });
 
     const header = h1('visually-hidden', 'Word puzzle application');
@@ -53,7 +57,8 @@ export default class LoginPageComponent extends BaseComponent {
     this.main = main({ className: 'login-page__main' }, header, this.form);
 
     this.appendChildren([this.main]);
-    this.storage = new LocalStorage();
+    this.router = router;
+    this.storage = storage;
   }
 
   private onFieldInput(evt: Event): void {
@@ -94,6 +99,13 @@ export default class LoginPageComponent extends BaseComponent {
     return validationErrorsString.split(fieldName).join(`\n⦁  ${fieldName}`).trim();
   }
 
+  private static updateFieldErrorState(field: LoginFieldComponent, errors: string): void {
+    if (errors) {
+      field.setErrorText(errors);
+      field.addClass('login-field--error');
+    }
+  }
+
   private areFieldsValid(): boolean {
     const nameFieldValue: string = this.nameField.getInputValue();
     const surnameFieldValue: string = this.surnameField.getInputValue();
@@ -115,13 +127,6 @@ export default class LoginPageComponent extends BaseComponent {
     return !nameFieldErrors && !surnameFieldErrors;
   }
 
-  private static updateFieldErrorState(field: LoginFieldComponent, errors: string): void {
-    if (errors) {
-      field.setErrorText(errors);
-      field.addClass('login-field--error');
-    }
-  }
-
   private onSubmitButtonClick = (evt?: Event | undefined): void => {
     if (evt) {
       evt.preventDefault();
@@ -132,6 +137,8 @@ export default class LoginPageComponent extends BaseComponent {
         name: this.nameField.getInputValue(),
         surname: this.surnameField.getInputValue(),
       });
+
+      this.router.navigate(Pages.START);
     }
   };
 }

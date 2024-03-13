@@ -9,7 +9,7 @@
     "build": "tsx node_modules/webpack/bin/webpack --mode=production --node-env=production",
     "build:dev": "tsx node_modules/webpack/bin/webpack --mode=development --node-env=development",
     "build:prod": "tsx node_modules/webpack/bin/webpack --mode=production --node-env=production",
-    "deploy": "npm run build && npx gh-pages -d dist -e news-api",
+    "deploy": "npm run build && npx gh-pages -d dist -e rss-puzzle",
     "format": "npx prettier --write .",
     "ci:format": "npx prettier --check .",
     "lint": "npx eslint ./src",

@@ -8,6 +8,9 @@ export const div = (
   ...children: ChildrenType[]
 ): BaseComponent<HTMLDivElement> => new BaseComponent(props, ...children);
 
+export const p = (props: ElementFnProps, ...children: ChildrenType[]): BaseComponent<HTMLParagraphElement> =>
+  new BaseComponent({ ...props, tag: 'p' }, ...children);
+
 export const span = (props: ElementFnProps, ...children: ChildrenType[]): BaseComponent<HTMLSpanElement> =>
   new BaseComponent({ ...props, tag: 'span' }, ...children);
 
