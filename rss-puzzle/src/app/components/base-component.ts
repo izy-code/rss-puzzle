@@ -66,6 +66,14 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
     this.node.classList.add(className);
   }
 
+  public addClasses(classNames: string): void {
+    const classes = classNames.split(' ');
+
+    classes.forEach((className) => {
+      this.addClass(className);
+    });
+  }
+
   public removeClass(className: string): void {
     this.node.classList.remove(className);
   }
@@ -76,6 +84,23 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
 
   public removeListener(event: string, handler: EventListener, options: boolean | EventListenerOptions = false): void {
     this.node.removeEventListener(event, handler, options);
+  }
+
+  public removeChild(child: ChildrenType): void {
+    if (child instanceof BaseComponent) {
+      this.children = this.children.filter((item) => item !== child);
+      this.node.removeChild(child.getNode());
+    } else {
+      this.node.removeChild(child);
+    }
+  }
+
+  public hasChild(child: ChildrenType): boolean {
+    return this.children.includes(child);
+  }
+
+  public hasChildren(): boolean {
+    return this.children.length > 0 || this.node.children.length > 0;
   }
 
   public removeNodeChildren(): void {

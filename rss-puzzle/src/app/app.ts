@@ -38,7 +38,7 @@ export default class App {
       },
       {
         path: Pages.PUZZLE,
-        handleRouteChange: this.handlePuzzleToStartPage,
+        handleRouteChange: this.handleSwitchToPuzzlePage,
       },
     ];
   }
@@ -75,7 +75,7 @@ export default class App {
       });
   };
 
-  private handlePuzzleToStartPage = (): void => {
+  private handleSwitchToPuzzlePage = (): void => {
     import('@/app/pages/puzzle/puzzle-page')
       .then(({ default: PuzzlePage }) => {
         const loginData = this.storage.getLoginData();

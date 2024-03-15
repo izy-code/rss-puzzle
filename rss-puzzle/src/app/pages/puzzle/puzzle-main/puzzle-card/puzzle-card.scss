@@ -1,0 +1,28 @@
+@use "../../../../../global-styles/forward" as *;
+
+.card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: $color-sandy-brown;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px $color-granite;
+  transition: background-color 0.6s ease-out;
+}
+
+.card--active {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    @include media-hover {
+      background-color: $color-pastel-yellow;
+    }
+  }
+
+  &:active {
+    background-color: $color-chinese-bronze;
+  }
+}
