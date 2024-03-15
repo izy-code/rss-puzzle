@@ -8,6 +8,8 @@ import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleCard from './puzzle-card/puzzle-card';
 import { getClosestFromEventTarget } from '@/app/utils';
 
+const SENTENCE_NUMBER = 7;
+
 export default class PuzzleMainComponent extends BaseComponent {
   private router: Router;
 
@@ -39,9 +41,9 @@ export default class PuzzleMainComponent extends BaseComponent {
     const rowNumbers = div({ className: 'main__row-numbers' }, ...this.createRowNumbers());
 
     this.rows = this.createRows();
-    [this.currentRow] = this.rows;
+    this.currentRow = this.rows[SENTENCE_NUMBER];
     this.board = div({ className: 'main__board' }, ...this.rows);
-    this.cards = this.createCards(0);
+    this.cards = this.createCards(SENTENCE_NUMBER);
     this.source = div({ className: 'main__source main__source--start' });
     this.createCardPlaces();
     this.addCardHandlers();

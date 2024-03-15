@@ -2,22 +2,30 @@
 
 .main {
   display: grid;
-  grid-template-columns: 30px 1fr;
   gap: 20px;
   width: 100%;
   max-width: 1080px;
+
+  @media (width >= 1120px) {
+    grid-template-columns: 30px 1fr;
+  }
 }
 
 .main__row-numbers {
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: space-around;
   align-items: center;
+
+  @media (width >= 1120px) {
+    display: flex;
+  }
 }
 
 .main__row-number {
   display: flex;
   justify-content: center;
+  align-items: center;
   width: 30px;
   height: 30px;
   font-size: 18px;
@@ -36,11 +44,11 @@
 
 .main__board,
 .main__source {
-  width: 678px;
+  width: 728px;
   max-width: 1080px;
 
   @media (width >= 768px) {
-    width: calc(100dvw - 90px);
+    width: calc(100dvw - 40px);
   }
 
   @media (width >= 1120px) {
@@ -56,13 +64,17 @@
 
 .main__source {
   display: flex;
-  grid-column: 2;
+  grid-row: 2;
   justify-content: center;
   height: 40px;
   margin-inline: auto;
 
   &--start {
     width: 100%;
+  }
+
+  @media (width >= 1120px) {
+    grid-column: 2;
   }
 }
 

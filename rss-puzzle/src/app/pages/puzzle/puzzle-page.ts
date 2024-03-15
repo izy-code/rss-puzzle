@@ -6,8 +6,8 @@ import JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleMainComponent from './puzzle-main/puzzle-main';
 
-const LEVEL_NUMBER = 0;
-const PAGE_NUMBER = 0;
+const LEVEL_NUMBER = 5;
+const PAGE_NUMBER = 20;
 
 export default class PuzzlePageComponent extends BaseComponent {
   private router: Router;
