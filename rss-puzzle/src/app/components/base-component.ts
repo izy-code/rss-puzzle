@@ -78,6 +78,10 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
     this.node.classList.remove(className);
   }
 
+  public containsClass(className: string): boolean {
+    return this.node.classList.contains(className);
+  }
+
   public addListener(event: string, handler: EventListener, options: boolean | AddEventListenerOptions = false): void {
     this.node.addEventListener(event, handler, options);
   }

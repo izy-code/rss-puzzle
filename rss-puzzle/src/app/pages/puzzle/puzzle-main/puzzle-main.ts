@@ -46,13 +46,20 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.cards = this.createCards(SENTENCE_NUMBER);
     this.source = div({ className: 'main__source main__source--start' });
     this.createCardPlaces();
-    this.addCardHandlers();
 
     this.appendChildren([rowNumbers, this.board, this.source]);
 
     this.setCardsWidth();
     this.resizeObserver = new ResizeObserver(this.handleResize);
     this.resizeObserver.observe(this.board.getNode());
+
+    if (this.currentRow) {
+      const onSourceClick = this.createCardMovementCurryHandler(this.source, this.currentRow);
+      const onCurrentRowClick = this.createCardMovementCurryHandler(this.currentRow, this.source);
+
+      this.source.addListener('click', onSourceClick);
+      this.currentRow.addListener('click', onCurrentRowClick);
+    }
   }
 
   private createRows(): BaseComponent<HTMLDivElement>[] {
@@ -117,41 +124,47 @@ export default class PuzzleMainComponent extends BaseComponent {
     }, 0);
   }
 
-  private addCardHandlers(): void {
-    this.source.addListener('click', (evt) => {
+  private createCardMovementCurryHandler =
+    (source: BaseComponent, target: BaseComponent): EventListener =>
+    (evt: Event) => {
       const cardNode = getClosestFromEventTarget(evt, '.main__card');
 
-      if (cardNode) {
-        const card = this.cards.find((cardInstance) => cardNode === cardInstance.getNode());
+      if (!cardNode) {
+        return;
+      }
 
-        if (!card) {
-          throw new Error(`Can't find card`);
-        }
+      const card = this.cards.find((cardInstance) => cardNode === cardInstance.getNode());
 
-        this.source.getChildren().forEach((place) => {
-          if (place instanceof BaseComponent && place.hasChild(card)) {
-            place.removeChild(card);
+      if (!card) {
+        throw new Error(`Can't find card`);
+      }
+
+      source.getChildren().forEach((place) => {
+        if (place instanceof BaseComponent && place.hasChild(card)) {
+          place.removeChild(card);
+
+          if (place.containsClass('main__row-place')) {
+            place.removeClass('main__row-place--full');
           }
-        });
-
-        if (!this.currentRow) {
-          throw new Error(`Can't find current row`);
         }
+      });
 
-        const children = this.currentRow.getChildren();
+      const children = target.getChildren();
 
-        for (let i = 0; i < children.length; i += 1) {
-          const place = children[i];
+      for (let i = 0; i < children.length; i += 1) {
+        const place = children[i];
 
-          if (place instanceof BaseComponent && !place.hasChildren()) {
-            place.append(card);
+        if (place instanceof BaseComponent && !place.hasChildren()) {
+          place.append(card);
+
+          if (place.containsClass('main__row-place')) {
             place.addClass('main__row-place--full');
-            break;
           }
+
+          break;
         }
       }
-    });
-  }
+    };
 
   private handleResize = (entries: ResizeObserverEntry[]): void => {
     if (!entries[0]) {
