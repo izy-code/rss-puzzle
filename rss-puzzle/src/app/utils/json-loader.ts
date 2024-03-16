@@ -18,7 +18,7 @@ export interface Sentence {
   wordTranslate: string;
 }
 
-interface Level {
+interface Page {
   levelData: PageData;
   words: Sentence[];
 }
@@ -26,7 +26,7 @@ interface Level {
 export default class JsonLoader {
   private url: string;
 
-  private levels: Level[] = [];
+  private pages: Page[] = [];
 
   constructor(levelNumber: number) {
     this.url = `${BASE_URL}/data/wordCollectionLevel${levelNumber + 1}.json`;
@@ -41,26 +41,30 @@ export default class JsonLoader {
 
         return response.json();
       })
-      .then((data: { rounds: Level[] }) => {
-        this.levels = data.rounds;
+      .then((levelData: { rounds: Page[] }) => {
+        this.pages = levelData.rounds;
       });
   }
 
-  public getLevelData(pageNumber: number): PageData {
-    const levelData = this.levels[pageNumber]?.levelData;
+  public getPagesCount(): number {
+    return this.pages.length;
+  }
 
-    if (!levelData) {
-      throw new Error(`Can't find level data for level number ${pageNumber}`);
+  public getPageData(pageNumber: number): PageData {
+    const pageData = this.pages[pageNumber]?.levelData;
+
+    if (!pageData) {
+      throw new Error(`Can't find data for page number ${pageNumber}`);
     }
 
-    return levelData;
+    return pageData;
   }
 
   public getSentences(pageNumber: number): Sentence[] {
-    const sentenceData = this.levels[pageNumber]?.words;
+    const sentenceData = this.pages[pageNumber]?.words;
 
     if (!sentenceData) {
-      throw new Error(`Can't find sentences for level number ${pageNumber}`);
+      throw new Error(`Can't find sentences for page number ${pageNumber}`);
     }
 
     return sentenceData;

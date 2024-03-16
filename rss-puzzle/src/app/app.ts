@@ -5,6 +5,8 @@ import { Pages } from './router/pages';
 import { div } from './components/tags';
 import LocalStorage from './utils/local-storage';
 
+const OPACITY_TRANSITION_TIME_MS = 600;
+
 export default class App {
   private container: BaseComponent;
 
@@ -38,6 +40,10 @@ export default class App {
       },
       {
         path: Pages.PUZZLE,
+        handleRouteChange: this.handleSwitchToPuzzlePage,
+      },
+      {
+        path: Pages.PUZZLE_AND_SUFFIX,
         handleRouteChange: this.handleSwitchToPuzzlePage,
       },
     ];
@@ -75,7 +81,7 @@ export default class App {
       });
   };
 
-  private handleSwitchToPuzzlePage = (): void => {
+  private handleSwitchToPuzzlePage = (suffix: string): void => {
     import('@/app/pages/puzzle/puzzle-page')
       .then(({ default: PuzzlePage }) => {
         const loginData = this.storage.getLoginData();
@@ -83,7 +89,15 @@ export default class App {
         if (!loginData) {
           this.router.navigate(Pages.LOGIN);
         } else {
-          this.setPage(new PuzzlePage(this.router, this.storage));
+          const suffixParts = suffix.split('-');
+          if (suffixParts[0] && suffixParts[1]) {
+            const levelNumber = +suffixParts[0] - 1;
+            const pageNumber = +suffixParts[1] - 1;
+
+            this.setPage(new PuzzlePage(this.router, this.storage, levelNumber, pageNumber));
+          } else {
+            this.setPage(new PuzzlePage(this.router, this.storage, 0, 0));
+          }
         }
       })
       .catch((error) => {
@@ -92,7 +106,15 @@ export default class App {
   };
 
   private setPage(pageComponent: BaseComponent): void {
-    this.container.removeNodeChildren();
-    this.container.append(pageComponent);
+    this.container.removeClass('app-container--opaque');
+
+    setTimeout(() => {
+      this.container.removeNodeChildren();
+      this.container.append(pageComponent);
+    }, OPACITY_TRANSITION_TIME_MS);
+
+    setTimeout(() => {
+      this.container.addClass('app-container--opaque');
+    }, OPACITY_TRANSITION_TIME_MS + 100);
   }
 }

@@ -5,29 +5,39 @@ import type Router from '@/app/router/router';
 import JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleMainComponent from './puzzle-main/puzzle-main';
+import { Pages } from '@/app/router/pages';
 
-const LEVEL_NUMBER = 5;
-const PAGE_NUMBER = 20;
+const LEVELS_COUNT = 5;
 
 export default class PuzzlePageComponent extends BaseComponent {
   private router: Router;
 
   private storage: LocalStorage;
 
-  private loader: JsonLoader;
-
-  constructor(router: Router, storage: LocalStorage) {
+  constructor(router: Router, storage: LocalStorage, levelNumber: number, pageNumber: number) {
     super({ className: 'app-container__page puzzle-page' });
 
     this.router = router;
     this.storage = storage;
-    this.loader = new JsonLoader(LEVEL_NUMBER);
-    this.loader
+
+    if (levelNumber < 0 || levelNumber > LEVELS_COUNT) {
+      this.router.navigate(Pages.PUZZLE);
+      return;
+    }
+
+    const loader = new JsonLoader(levelNumber);
+
+    loader
       .loadPages()
       .then(() => {
+        if (pageNumber < 0 || pageNumber >= loader.getPagesCount()) {
+          this.router.navigate(Pages.PUZZLE);
+          return;
+        }
+
         const headerComponent = header({ className: 'puzzle-page__header' });
 
-        const mainComponent = new PuzzleMainComponent(router, storage, this.loader, PAGE_NUMBER);
+        const mainComponent = new PuzzleMainComponent(router, storage, loader, levelNumber, pageNumber);
 
         this.appendChildren([headerComponent, mainComponent]);
       })
