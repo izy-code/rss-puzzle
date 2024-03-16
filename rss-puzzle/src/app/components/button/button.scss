@@ -68,4 +68,19 @@
       background-color: $color-dark-green;
     }
   }
+
+  &--continue {
+    background-color: $color-light-blue;
+
+    &:hover,
+    &:focus-visible {
+      @include media-hover {
+        background-color: $color-blue;
+      }
+    }
+
+    &:active {
+      background-color: $color-dark-blue;
+    }
+  }
 }

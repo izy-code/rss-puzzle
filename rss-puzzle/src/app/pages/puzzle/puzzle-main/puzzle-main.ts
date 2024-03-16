@@ -32,12 +32,6 @@ export default class PuzzleMainComponent extends BaseComponent {
 
   private currentRow = new BaseComponent<HTMLDivElement>({});
 
-  private continueButton = ButtonComponent({
-    className: 'main__continue-button button',
-    textContent: 'Continue',
-    buttonType: 'button',
-  });
-
   private checkButton = ButtonComponent({
     className: 'main__check-button button',
     textContent: 'Check',
@@ -69,24 +63,17 @@ export default class PuzzleMainComponent extends BaseComponent {
     const rowNumbers = div({ className: 'main__row-numbers' }, ...this.createRowNumbers());
     const buttonsContainer = div({ className: 'main__buttons-container' });
 
-    this.continueButton.setAttribute('disabled', '');
     this.checkButton.setAttribute('disabled', '');
-    buttonsContainer.appendChildren([this.continueButton, this.checkButton]);
+    buttonsContainer.appendChildren([this.checkButton]);
 
     this.appendChildren([rowNumbers, this.board, this.source, buttonsContainer]);
 
     setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
-    this.continueButton.addListener('click', this.onContinueButtonClick);
     this.checkButton.addListener('click', this.onCheckButtonClick);
   }
 
   private showSentence(sentenceNumber: number): void {
-    if (this.listeners.onSourceClick && this.listeners.onCurrentRowClick) {
-      this.source.removeListener('click', this.listeners.onSourceClick);
-      this.currentRow.removeListener('click', this.listeners.onCurrentRowClick);
-    }
-
     this.source.addClass('main__source--start');
 
     const currentRow = this.rows[sentenceNumber];
@@ -265,10 +252,33 @@ export default class PuzzleMainComponent extends BaseComponent {
     }
 
     if (isRowOrdered) {
-      this.continueButton.removeAttribute('disabled');
-      this.checkButton.setAttribute('disabled', '');
+      this.handleOrderedRow();
     }
   };
+
+  private handleOrderedRow(): void {
+    this.checkButton.setTextContent('Continue');
+    this.checkButton.addClass('button--continue');
+    this.checkButton.removeListener('click', this.onCheckButtonClick);
+    this.checkButton.addListener('click', this.onContinueButtonClick);
+
+    if (this.listeners.onSourceClick && this.listeners.onCurrentRowClick) {
+      this.source.removeListener('click', this.listeners.onSourceClick);
+      this.currentRow.removeListener('click', this.listeners.onCurrentRowClick);
+    }
+
+    this.currentRow.getChildren().forEach((place) => {
+      if (!(place instanceof BaseComponent)) {
+        throw new TypeError(`Wrong place type`);
+      }
+
+      place.getChildren().forEach((card) => {
+        if (card instanceof PuzzleCard) {
+          card.removeClass('card--active');
+        }
+      });
+    });
+  }
 
   private removeCardsClasses(): void {
     this.cards.forEach((card) => {
@@ -351,20 +361,11 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.removeCardsClasses();
     this.currentSentenceNumber += 1;
-
-    this.currentRow.getChildren().forEach((place) => {
-      if (!(place instanceof BaseComponent)) {
-        throw new TypeError(`Wrong place type`);
-      }
-
-      place.getChildren().forEach((card) => {
-        if (card instanceof PuzzleCard) {
-          card.removeClass('card--active');
-        }
-      });
-    });
-
+    this.checkButton.setAttribute('disabled', '');
+    this.checkButton.setTextContent('Check');
+    this.checkButton.removeClass('button--continue');
+    this.checkButton.addListener('click', this.onCheckButtonClick);
+    this.checkButton.removeListener('click', this.onContinueButtonClick);
     setTimeout(() => this.showSentence(this.currentSentenceNumber), SENTENCE_OPACITY_TRANSITION_TIME_MS);
-    this.continueButton.setAttribute('disabled', '');
   };
 }
