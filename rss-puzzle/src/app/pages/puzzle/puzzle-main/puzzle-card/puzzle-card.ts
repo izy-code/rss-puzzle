@@ -6,6 +6,10 @@ export default class PuzzleCard extends BaseComponent<HTMLDivElement> {
 
   private relativeWidth = 0.1;
 
+  public isInRightPlace = false;
+
+  private parentPlace: BaseComponent<HTMLElement> = new BaseComponent<HTMLElement>({});
+
   constructor(textContent: string, orderNumber: number, className: string) {
     super({ className: 'card', tag: 'div', textContent });
 
@@ -23,5 +27,13 @@ export default class PuzzleCard extends BaseComponent<HTMLDivElement> {
 
   public setRelativeWidth(relativeWIdth: number): void {
     this.relativeWidth = relativeWIdth;
+  }
+
+  public getParentPlace(): BaseComponent<HTMLElement> {
+    return this.parentPlace;
+  }
+
+  public setParentPlace(parentPlace: BaseComponent<HTMLElement>): void {
+    this.parentPlace = parentPlace;
   }
 }

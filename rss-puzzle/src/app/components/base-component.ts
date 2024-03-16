@@ -78,7 +78,7 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
     this.node.classList.remove(className);
   }
 
-  public containsClass(className: string): boolean {
+  public hasClass(className: string): boolean {
     return this.node.classList.contains(className);
   }
 

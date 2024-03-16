@@ -42,7 +42,7 @@ export default class StartPageComponent extends BaseComponent {
       textContent: `If you wish to log out, please press the button below.`,
     });
     const logoutButton = ButtonComponent({
-      className: 'start-page__logout-button button button--logout',
+      className: 'start-page__logout-button button button--cancel',
       textContent: 'Logout',
       buttonType: 'button',
       clickHandler: this.onLogoutButtonClick,

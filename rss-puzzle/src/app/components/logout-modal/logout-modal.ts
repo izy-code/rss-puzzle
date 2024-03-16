@@ -33,7 +33,7 @@ export default class LogoutModalComponent extends BaseComponent {
     });
 
     this.confirmButton = ButtonComponent({
-      className: 'modal__button button button--logout',
+      className: 'modal__button button button--cancel',
       textContent: 'Yes, log out',
       buttonType: 'button',
       clickHandler: this.onConfirmButtonClick,

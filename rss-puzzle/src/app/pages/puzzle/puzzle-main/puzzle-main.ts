@@ -12,6 +12,7 @@ import { Pages } from '@/app/router/pages';
 
 const START_OPACITY_TRANSITION_TIME_MS = 600;
 const SENTENCE_OPACITY_TRANSITION_TIME_MS = 100;
+const CARD_MOVE_TRANSITION_TIME_MS = 1500;
 
 export default class PuzzleMainComponent extends BaseComponent {
   private router: Router;
@@ -35,6 +36,12 @@ export default class PuzzleMainComponent extends BaseComponent {
   private checkButton = ButtonComponent({
     className: 'main__check-button button',
     textContent: 'Check',
+    buttonType: 'button',
+  });
+
+  private completeButton = ButtonComponent({
+    className: 'main__check-button button button--cancel',
+    textContent: 'Auto-Complete',
     buttonType: 'button',
   });
 
@@ -64,13 +71,14 @@ export default class PuzzleMainComponent extends BaseComponent {
     const buttonsContainer = div({ className: 'main__buttons-container' });
 
     this.checkButton.setAttribute('disabled', '');
-    buttonsContainer.appendChildren([this.checkButton]);
+    buttonsContainer.appendChildren([this.completeButton, this.checkButton]);
 
     this.appendChildren([rowNumbers, this.board, this.source, buttonsContainer]);
 
     setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
     this.checkButton.addListener('click', this.onCheckButtonClick);
+    this.completeButton.addListener('click', this.onCompleteButtonClick);
   }
 
   private showSentence(sentenceNumber: number): void {
@@ -91,8 +99,8 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.resizeObserver = new ResizeObserver(this.handleBoardResize.bind(this));
     this.resizeObserver?.observe(this.board.getNode());
 
-    this.listeners.onSourceClick = this.createCardMovementCurryHandler(this.source, this.currentRow);
-    this.listeners.onCurrentRowClick = this.createCardMovementCurryHandler(this.currentRow, this.source);
+    this.listeners.onSourceClick = this.createCardMovementCurryHandler(this.currentRow);
+    this.listeners.onCurrentRowClick = this.createCardMovementCurryHandler(this.source);
 
     this.source.addListener('click', this.listeners.onSourceClick);
     this.currentRow.addListener('click', this.listeners.onCurrentRowClick);
@@ -119,7 +127,7 @@ export default class PuzzleMainComponent extends BaseComponent {
   }
 
   private getShuffledCards(): PuzzleCard[] {
-    const cardsArray = this.cards;
+    const cardsArray = this.cards.slice();
 
     for (let index = cardsArray.length - 1; index > 0; index -= 1) {
       const randomIndex = Math.floor(Math.random() * (index + 1));
@@ -142,7 +150,10 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.getShuffledCards().forEach((card) => {
       this.currentRow.append(div({ className: 'main__row-place' }));
 
-      this.source.append(div({ className: 'main__source-place' }, card));
+      const place = div({ className: 'main__source-place' }, card);
+      card.setParentPlace(place);
+
+      this.source.append(place);
     });
   }
 
@@ -168,9 +179,9 @@ export default class PuzzleMainComponent extends BaseComponent {
   }
 
   private createCardMovementCurryHandler =
-    (source: BaseComponent, target: BaseComponent): EventListener =>
+    (target: BaseComponent): EventListener =>
     (evt: Event) => {
-      const card = this.getMovedCard(evt, source);
+      const card = this.findMovedCardComponent(evt);
 
       if (!card) {
         return;
@@ -178,18 +189,22 @@ export default class PuzzleMainComponent extends BaseComponent {
 
       const children = target.getChildren();
 
-      for (let i = 0; i < children.length; i += 1) {
-        const place = children[i];
+      for (let placeNumber = 0; placeNumber < children.length; placeNumber += 1) {
+        const place = children[placeNumber];
 
         if (place instanceof BaseComponent && !place.hasChildren()) {
           place.append(card);
+          card.setParentPlace(place);
 
-          if (place.containsClass('main__row-place')) {
+          if (place.hasClass('main__row-place')) {
             place.addClass('main__row-place--full');
+            card.isInRightPlace = placeNumber === card.getOrder();
 
             if (this.isRowFilled()) {
               this.checkButton.removeAttribute('disabled');
             }
+          } else {
+            card.isInRightPlace = false;
           }
 
           break;
@@ -197,31 +212,28 @@ export default class PuzzleMainComponent extends BaseComponent {
       }
     };
 
-  private getMovedCard(evt: Event, source: BaseComponent): PuzzleCard | null {
-    const cardNode = getClosestFromEventTarget(evt, '.main__card');
+  private findMovedCardComponent(evt: Event): PuzzleCard | null {
+    const clickedCardNode = getClosestFromEventTarget(evt, '.main__card');
 
-    if (!cardNode) {
+    if (!clickedCardNode) {
       return null;
     }
 
-    const card = this.cards.find((cardInstance) => cardNode === cardInstance.getNode());
+    const card = this.cards.find((cardsItem) => clickedCardNode === cardsItem.getNode());
 
     if (!card) {
       throw new Error(`Can't find card`);
     }
 
+    const place = card.getParentPlace();
+
+    place.removeChild(card);
     this.removeCardsClasses();
 
-    source.getChildren().forEach((place) => {
-      if (place instanceof BaseComponent && place.hasChild(card)) {
-        place.removeChild(card);
-
-        if (place.containsClass('main__row-place')) {
-          place.removeClass('main__row-place--full');
-          this.checkButton.setAttribute('disabled', '');
-        }
-      }
-    });
+    if (place.hasClass('main__row-place')) {
+      place.removeClass('main__row-place--full');
+      this.checkButton.setAttribute('disabled', '');
+    }
 
     return card;
   }
@@ -243,7 +255,7 @@ export default class PuzzleMainComponent extends BaseComponent {
         throw new TypeError(`Wrong card type`);
       }
 
-      if (card.getOrder() !== index) {
+      if (!card.isInRightPlace) {
         card.addClass('card--wrong');
         isRowOrdered = false;
       } else {
@@ -267,16 +279,8 @@ export default class PuzzleMainComponent extends BaseComponent {
       this.currentRow.removeListener('click', this.listeners.onCurrentRowClick);
     }
 
-    this.currentRow.getChildren().forEach((place) => {
-      if (!(place instanceof BaseComponent)) {
-        throw new TypeError(`Wrong place type`);
-      }
-
-      place.getChildren().forEach((card) => {
-        if (card instanceof PuzzleCard) {
-          card.removeClass('card--active');
-        }
-      });
+    this.cards.forEach((card) => {
+      card.removeClass('card--active');
     });
   }
 
@@ -293,7 +297,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     for (let index = 0; index < cardPlaces.length; index += 1) {
       const place = cardPlaces[index];
 
-      if (!(place instanceof BaseComponent) || !place.containsClass('main__row-place--full')) {
+      if (!(place instanceof BaseComponent) || !place.hasClass('main__row-place--full')) {
         return false;
       }
     }
@@ -362,10 +366,92 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.removeCardsClasses();
     this.currentSentenceNumber += 1;
     this.checkButton.setAttribute('disabled', '');
+    this.completeButton.removeAttribute('disabled');
     this.checkButton.setTextContent('Check');
     this.checkButton.removeClass('button--continue');
     this.checkButton.addListener('click', this.onCheckButtonClick);
     this.checkButton.removeListener('click', this.onContinueButtonClick);
     setTimeout(() => this.showSentence(this.currentSentenceNumber), SENTENCE_OPACITY_TRANSITION_TIME_MS);
+  };
+
+  private onCompleteButtonClick = (): void => {
+    let rowOffsetX = 0;
+
+    for (let index = 0; index < this.cards.length; index += 1) {
+      const card = this.cards[index];
+
+      if (!(card instanceof PuzzleCard)) {
+        throw new TypeError(`Wrong card type`);
+      }
+
+      this.moveCardToRightPlace(card, rowOffsetX);
+      rowOffsetX += card.getNode().offsetWidth;
+    }
+
+    this.completeButton.setAttribute('disabled', '');
+    this.handleOrderedRow();
+    this.changeSourcePlacesWidth();
+    setTimeout(() => this.checkButton.removeAttribute('disabled'), CARD_MOVE_TRANSITION_TIME_MS);
+  };
+
+  private moveCardToRightPlace = (card: PuzzleCard, rowOffsetX: number): void => {
+    const rightPlace = this.currentRow.getChildren()[card.getOrder()];
+
+    if (!(rightPlace instanceof BaseComponent)) {
+      throw new Error(`Can't find place`);
+    }
+
+    if (card.isInRightPlace) {
+      this.moveAndAppend(card, null, rowOffsetX);
+    }
+
+    this.moveAndAppend(card, rightPlace, rowOffsetX);
+  };
+
+  private moveAndAppend = (movedCard: PuzzleCard, targetPlace: BaseComponent | null, rowOffsetX: number): void => {
+    const movedNode = movedCard.getNode();
+
+    const baseRect = movedNode.getBoundingClientRect();
+    const rowRect = this.currentRow.getNode().getBoundingClientRect();
+
+    const offsetX = rowRect.left + rowOffsetX - baseRect.left;
+    const offsetY = rowRect.top - baseRect.top;
+
+    movedNode.style.transition = `transform ${CARD_MOVE_TRANSITION_TIME_MS}ms, background-color ${CARD_MOVE_TRANSITION_TIME_MS}ms`;
+    movedNode.style.transform = `translate(${offsetX}px, ${offsetY}px`;
+
+    movedNode.addEventListener(
+      'transitionend',
+      () => {
+        movedNode.style.transition = '';
+        movedNode.style.transform = '';
+
+        if (targetPlace) {
+          movedCard.getParentPlace().removeChild(movedCard);
+          targetPlace.addClass('main__row-place--full');
+          targetPlace.append(movedCard);
+          movedCard.setParentPlace(targetPlace);
+        }
+      },
+      { once: true },
+    );
+  };
+
+  private changeSourcePlacesWidth = (): void => {
+    const sourcePlaces = this.source.getChildren();
+
+    for (let i = 0; i < sourcePlaces.length; i += 1) {
+      const place = sourcePlaces[i];
+
+      if (!(place instanceof BaseComponent)) {
+        throw new TypeError(`Wrong place type`);
+      }
+
+      place.getNode().style.width = `${place.getNode().offsetWidth}px`;
+
+      setTimeout(() => {
+        place.getNode().style.width = `40px`;
+      }, CARD_MOVE_TRANSITION_TIME_MS);
+    }
   };
 }
