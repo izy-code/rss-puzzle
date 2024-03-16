@@ -114,7 +114,8 @@
   }
 }
 
-.main .main__continue-button {
+.main .main__continue-button,
+.main .main__check-button {
   &:disabled {
     background-color: $color-bone;
   }

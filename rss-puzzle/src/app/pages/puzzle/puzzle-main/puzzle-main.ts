@@ -38,6 +38,12 @@ export default class PuzzleMainComponent extends BaseComponent {
     buttonType: 'button',
   });
 
+  private checkButton = ButtonComponent({
+    className: 'main__check-button button',
+    textContent: 'Check',
+    buttonType: 'button',
+  });
+
   private cards: PuzzleCard[] = [];
 
   private resizeObserver: ResizeObserver | null = null;
@@ -64,13 +70,15 @@ export default class PuzzleMainComponent extends BaseComponent {
     const buttonsContainer = div({ className: 'main__buttons-container' });
 
     this.continueButton.setAttribute('disabled', '');
-    buttonsContainer.append(this.continueButton);
+    this.checkButton.setAttribute('disabled', '');
+    buttonsContainer.appendChildren([this.continueButton, this.checkButton]);
 
     this.appendChildren([rowNumbers, this.board, this.source, buttonsContainer]);
 
     setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
     this.continueButton.addListener('click', this.onContinueButtonClick);
+    this.checkButton.addListener('click', this.onCheckButtonClick);
   }
 
   private showSentence(sentenceNumber: number): void {
@@ -192,8 +200,8 @@ export default class PuzzleMainComponent extends BaseComponent {
           if (place.containsClass('main__row-place')) {
             place.addClass('main__row-place--full');
 
-            if (this.checkSentenceOrder()) {
-              this.continueButton.removeAttribute('disabled');
+            if (this.isRowFilled()) {
+              this.checkButton.removeAttribute('disabled');
             }
           }
 
@@ -215,13 +223,15 @@ export default class PuzzleMainComponent extends BaseComponent {
       throw new Error(`Can't find card`);
     }
 
+    this.removeCardsClasses();
+
     source.getChildren().forEach((place) => {
       if (place instanceof BaseComponent && place.hasChild(card)) {
         place.removeChild(card);
 
         if (place.containsClass('main__row-place')) {
           place.removeClass('main__row-place--full');
-          this.continueButton.setAttribute('disabled', '');
+          this.checkButton.setAttribute('disabled', '');
         }
       }
     });
@@ -229,19 +239,51 @@ export default class PuzzleMainComponent extends BaseComponent {
     return card;
   }
 
-  private checkSentenceOrder(): boolean {
+  private onCheckButtonClick = (): void => {
+    const cardPlaces = this.currentRow.getChildren();
+    let isRowOrdered = true;
+
+    for (let index = 0; index < cardPlaces.length; index += 1) {
+      const place = cardPlaces[index];
+
+      if (!(place instanceof BaseComponent)) {
+        throw new Error(`Wrong place type`);
+      }
+
+      const card = place.getChildren()[0];
+
+      if (!(card instanceof PuzzleCard)) {
+        throw new TypeError(`Wrong card type`);
+      }
+
+      if (card.getOrder() !== index) {
+        card.addClass('card--wrong');
+        isRowOrdered = false;
+      } else {
+        card.addClass('card--right');
+      }
+    }
+
+    if (isRowOrdered) {
+      this.continueButton.removeAttribute('disabled');
+      this.checkButton.setAttribute('disabled', '');
+    }
+  };
+
+  private removeCardsClasses(): void {
+    this.cards.forEach((card) => {
+      card.removeClass('card--right');
+      card.removeClass('card--wrong');
+    });
+  }
+
+  private isRowFilled(): boolean {
     const cardPlaces = this.currentRow.getChildren();
 
     for (let index = 0; index < cardPlaces.length; index += 1) {
       const place = cardPlaces[index];
 
       if (!(place instanceof BaseComponent) || !place.containsClass('main__row-place--full')) {
-        return false;
-      }
-
-      const cardInPlace = place.getChildren()[0];
-
-      if (!(cardInPlace instanceof PuzzleCard) || cardInPlace.getOrder() !== index) {
         return false;
       }
     }
@@ -307,6 +349,7 @@ export default class PuzzleMainComponent extends BaseComponent {
       return;
     }
 
+    this.removeCardsClasses();
     this.currentSentenceNumber += 1;
 
     this.currentRow.getChildren().forEach((place) => {
