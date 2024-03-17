@@ -6,7 +6,7 @@ export default class PuzzleCard extends BaseComponent<HTMLDivElement> {
 
   private relativeWidth = 0.1;
 
-  public isInRightPlace = false;
+  private isRightPlace = false;
 
   private parentPlace: BaseComponent<HTMLElement> = new BaseComponent<HTMLElement>({});
 
@@ -35,5 +35,13 @@ export default class PuzzleCard extends BaseComponent<HTMLDivElement> {
 
   public setParentPlace(parentPlace: BaseComponent<HTMLElement>): void {
     this.parentPlace = parentPlace;
+  }
+
+  public getIsRightPlace(): boolean {
+    return this.isRightPlace;
+  }
+
+  public setIsRightPlace(isRightPlace: boolean): void {
+    this.isRightPlace = isRightPlace;
   }
 }

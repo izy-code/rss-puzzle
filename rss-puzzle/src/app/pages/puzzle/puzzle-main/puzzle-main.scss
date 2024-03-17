@@ -82,7 +82,7 @@
   min-width: 40px;
   background-color: $color-bone;
   box-shadow: inset 0 0 0 1px $color-granite;
-  transition: width 0.6s ease-out;
+  transition: width 0.6s ease-out, box-shadow 0.6s ease-out;
 
   .main__source--start & {
     flex-grow: 1;
@@ -94,6 +94,7 @@
   min-width: 40px;
   background-color: $color-blue;
   box-shadow: inset 0 0 0 1px $color-granite;
+  transition: box-shadow 0.6s ease-out;
 
   &--full {
     flex-grow: 0;
@@ -118,5 +119,11 @@
 .main .main__check-button {
   &:disabled {
     background-color: $color-bone;
+  }
+}
+
+.main .drop-place {
+  &--hover {
+    box-shadow: inset 0 0 2px 2px $color-yellow;
   }
 }

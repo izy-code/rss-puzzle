@@ -55,6 +55,10 @@ export default class PuzzleMainComponent extends BaseComponent {
 
   private levelNumber: number;
 
+  private draggedCardNode: HTMLElement | null = null;
+
+  private currentDropPlace: Element | null = null;
+
   constructor(router: Router, storage: LocalStorage, loader: JsonLoader, levelNumber: number, pageNumber: number) {
     super({ className: 'puzzle-page__main main', tag: 'main' });
 
@@ -79,6 +83,9 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.checkButton.addListener('click', this.onCheckButtonClick);
     this.completeButton.addListener('click', this.onCompleteButtonClick);
+
+    document.addEventListener('mousedown', this.mouseDragHandler);
+    document.addEventListener('touchstart', this.touchDragHandler);
   }
 
   private showSentence(sentenceNumber: number): void {
@@ -104,6 +111,8 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.source.addListener('click', this.listeners.onSourceClick);
     this.currentRow.addListener('click', this.listeners.onCurrentRowClick);
+
+    this.cancelCardsDragStart();
   }
 
   private createRows(): BaseComponent<HTMLDivElement>[] {
@@ -145,12 +154,12 @@ export default class PuzzleMainComponent extends BaseComponent {
   }
 
   private createCardPlaces(): void {
-    this.source.removeNodeChildren();
+    this.source.removeChildren();
 
     this.getShuffledCards().forEach((card) => {
-      this.currentRow.append(div({ className: 'main__row-place' }));
+      this.currentRow.append(div({ className: 'main__row-place drop-place' }));
 
-      const place = div({ className: 'main__source-place' }, card);
+      const place = div({ className: 'main__source-place drop-place' }, card);
       card.setParentPlace(place);
 
       this.source.append(place);
@@ -198,13 +207,13 @@ export default class PuzzleMainComponent extends BaseComponent {
 
           if (place.hasClass('main__row-place')) {
             place.addClass('main__row-place--full');
-            card.isInRightPlace = placeNumber === card.getOrder();
+            card.setIsRightPlace(placeNumber === card.getOrder());
 
             if (this.isRowFilled()) {
               this.checkButton.removeAttribute('disabled');
             }
           } else {
-            card.isInRightPlace = false;
+            card.setIsRightPlace(false);
           }
 
           break;
@@ -255,7 +264,7 @@ export default class PuzzleMainComponent extends BaseComponent {
         throw new TypeError(`Wrong card type`);
       }
 
-      if (!card.isInRightPlace) {
+      if (!card.getIsRightPlace()) {
         card.addClass('card--wrong');
         isRowOrdered = false;
       } else {
@@ -281,6 +290,12 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.cards.forEach((card) => {
       card.removeClass('card--active');
+    });
+
+    this.currentRow.getChildren().forEach((place) => {
+      if (place instanceof BaseComponent) {
+        place.removeClass('drop-place');
+      }
     });
   }
 
@@ -391,6 +406,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.completeButton.setAttribute('disabled', '');
     this.handleOrderedRow();
     this.changeSourcePlacesWidth();
+    this.removeCardsClasses();
     setTimeout(() => this.checkButton.removeAttribute('disabled'), CARD_MOVE_TRANSITION_TIME_MS);
   };
 
@@ -401,7 +417,7 @@ export default class PuzzleMainComponent extends BaseComponent {
       throw new Error(`Can't find place`);
     }
 
-    if (card.isInRightPlace) {
+    if (card.getIsRightPlace()) {
       this.moveAndAppend(card, null, rowOffsetX);
     }
 
@@ -454,4 +470,389 @@ export default class PuzzleMainComponent extends BaseComponent {
       }, CARD_MOVE_TRANSITION_TIME_MS);
     }
   };
+
+  private mouseDragHandler = (evt: MouseEvent): void => {
+    const initialMouseMoveHandler = this.createInitialMouseMoveHandler(evt);
+
+    document.addEventListener(
+      'mouseup',
+      () => {
+        document.removeEventListener('mousemove', initialMouseMoveHandler);
+      },
+      { once: true },
+    );
+
+    document.addEventListener('mousemove', initialMouseMoveHandler, { once: true });
+  };
+
+  private createInitialMouseMoveHandler =
+    (mouseDownEvt: MouseEvent): (() => void) =>
+    () => {
+      if (!(mouseDownEvt.target instanceof HTMLElement) || !mouseDownEvt.target.classList.contains('card--active')) {
+        return;
+      }
+
+      this.draggedCardNode = mouseDownEvt.target;
+
+      const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
+      const shiftX = mouseDownEvt.clientX - draggedNodeRect.left;
+      const shiftY = mouseDownEvt.clientY - draggedNodeRect.top;
+      const startingPlaceNode = this.draggedCardNode.parentElement;
+
+      if (!startingPlaceNode) {
+        return;
+      }
+
+      const startingPlaceData = this.findPlaceComponentfromNode(startingPlaceNode);
+
+      const draggedCard = this.cards.find((cardsItem) => cardsItem.getNode() === this.draggedCardNode);
+
+      if (!draggedCard) {
+        return;
+      }
+
+      this.draggedCardNode.style.position = 'absolute';
+      this.draggedCardNode.style.cursor = 'grabbing';
+      this.draggedCardNode.style.zIndex = '10';
+      this.draggedCardNode.style.left = `${mouseDownEvt.pageX - shiftX}px`;
+      this.draggedCardNode.style.top = `${mouseDownEvt.pageY - shiftY}px`;
+      document.body.append(this.draggedCardNode);
+      this.currentDropPlace = null;
+
+      this.addMouseHandlers(shiftX, shiftY, startingPlaceData, draggedCard);
+    };
+
+  private addMouseHandlers = (
+    shiftX: number,
+    shiftY: number,
+    startingPlaceData: { place: BaseComponent | null; index: number },
+    draggedCard: PuzzleCard,
+  ): void => {
+    if (!this.draggedCardNode) {
+      return;
+    }
+
+    const onMouseMove = this.createMouseMoveHandler(shiftX, shiftY);
+
+    document.addEventListener('mousemove', onMouseMove);
+
+    this.draggedCardNode.addEventListener(
+      'mouseup',
+      () => {
+        if (!this.draggedCardNode) {
+          return;
+        }
+
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.remove('place--hover');
+        }
+
+        this.handleDrop(startingPlaceData, draggedCard);
+        this.draggedCardNode.style.cursor = '';
+        document.removeEventListener('mousemove', onMouseMove);
+      },
+      { once: true },
+    );
+  };
+
+  private handleDrop = (
+    startingPlaceData: { place: BaseComponent | null; index: number },
+    draggedCard: PuzzleCard,
+  ): void => {
+    if (!this.draggedCardNode || !startingPlaceData.place) {
+      return;
+    }
+
+    if (!this.currentDropPlace || this.currentDropPlace === startingPlaceData.place.getNode()) {
+      startingPlaceData.place.getNode().append(this.draggedCardNode);
+
+      this.resetDraggedCardStyles();
+    } else if (!this.currentDropPlace.hasChildNodes()) {
+      this.handleDropToEmptyPlace(startingPlaceData, draggedCard);
+    } else {
+      this.handleDropToNonEmptyPlace(startingPlaceData, draggedCard);
+    }
+  };
+
+  private handleDropToEmptyPlace = (
+    startingPlaceData: { place: BaseComponent | null; index: number },
+    draggedCard: PuzzleCard,
+  ): void => {
+    if (!this.currentDropPlace || !startingPlaceData.place) {
+      return;
+    }
+
+    this.resetDraggedCardStyles();
+    this.removeCardsClasses();
+    startingPlaceData.place.cleanComponentChildrenList();
+
+    if (startingPlaceData.place.hasClass('main__row-place')) {
+      startingPlaceData.place.removeClass('main__row-place--full');
+
+      if (this.currentDropPlace.classList.contains('main__source-place')) {
+        this.checkButton.setAttribute('disabled', '');
+      }
+    }
+
+    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentfromNode(this.currentDropPlace);
+
+    if (!dropPlace) {
+      return;
+    }
+
+    dropPlace.append(draggedCard);
+    draggedCard.setParentPlace(dropPlace);
+
+    if (dropPlace.hasClass('main__row-place')) {
+      dropPlace.addClass('main__row-place--full');
+      draggedCard.setIsRightPlace(dropPlaceNumber === draggedCard.getOrder());
+
+      if (this.isRowFilled()) {
+        this.checkButton.removeAttribute('disabled');
+      }
+    } else {
+      draggedCard.setIsRightPlace(false);
+    }
+  };
+
+  private handleDropToNonEmptyPlace = (
+    startingPlaceData: { place: BaseComponent | null; index: number },
+    draggedCard: PuzzleCard,
+  ): void => {
+    if (!this.currentDropPlace || !startingPlaceData.place) {
+      return;
+    }
+
+    this.resetDraggedCardStyles();
+    this.removeCardsClasses();
+    startingPlaceData.place.cleanComponentChildrenList();
+
+    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentfromNode(this.currentDropPlace);
+
+    if (!dropPlace) {
+      return;
+    }
+
+    const cardFromDropPlace = dropPlace.getChildren()[0];
+
+    if (!(cardFromDropPlace instanceof PuzzleCard)) {
+      return;
+    }
+
+    dropPlace.removeChildren();
+    PuzzleMainComponent.handleCardAdd(dropPlace, draggedCard, dropPlaceNumber);
+    PuzzleMainComponent.handleCardAdd(startingPlaceData.place, cardFromDropPlace, startingPlaceData.index);
+  };
+
+  private static handleCardAdd = (place: BaseComponent, card: PuzzleCard, placeNumber: number): void => {
+    place.append(card);
+    card.setParentPlace(place);
+
+    if (place.hasClass('main__row-place')) {
+      card.setIsRightPlace(placeNumber === card.getOrder());
+    } else {
+      card.setIsRightPlace(false);
+    }
+  };
+
+  private resetDraggedCardStyles(): void {
+    if (!this.draggedCardNode) {
+      return;
+    }
+
+    this.draggedCardNode.style.position = '';
+    this.draggedCardNode.style.cursor = '';
+    this.draggedCardNode.style.zIndex = '';
+    this.draggedCardNode.style.left = ``;
+    this.draggedCardNode.style.top = ``;
+  }
+
+  private findPlaceComponentfromNode = (node: Element): { place: BaseComponent | null; index: number } => {
+    if (!node) {
+      return { place: null, index: -1 };
+    }
+
+    if (node.classList.contains('main__row-place')) {
+      const children = this.currentRow.getChildren();
+      for (let i = 0; i < children.length; i += 1) {
+        const place = children[i];
+        if (place instanceof BaseComponent && place.getNode() === node) {
+          return { place, index: i };
+        }
+      }
+    } else {
+      const children = this.source.getChildren();
+      for (let i = 0; i < children.length; i += 1) {
+        const place = children[i];
+        if (place instanceof BaseComponent && place.getNode() === node) {
+          return { place, index: i };
+        }
+      }
+    }
+
+    return { place: null, index: -1 };
+  };
+
+  private createMouseMoveHandler(shiftX: number, shiftY: number): (evt: MouseEvent) => void {
+    return (evt: MouseEvent) => {
+      if (!this.draggedCardNode) {
+        return;
+      }
+
+      this.draggedCardNode.style.left = `${evt.pageX - shiftX}px`;
+      this.draggedCardNode.style.top = `${evt.pageY - shiftY}px`;
+      this.draggedCardNode.style.display = 'none';
+
+      const underNode = document.elementFromPoint(evt.clientX, evt.clientY);
+
+      this.draggedCardNode.style.display = '';
+
+      if (!underNode) {
+        return;
+      }
+
+      const enteredDropPlace = underNode.closest('.drop-place');
+
+      if (this.currentDropPlace !== enteredDropPlace) {
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.remove('place--hover');
+          this.draggedCardNode.style.cursor = 'grabbing';
+        }
+
+        this.currentDropPlace = enteredDropPlace;
+
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.add('place--hover');
+          this.draggedCardNode.style.cursor = 'cell';
+        }
+      }
+    };
+  }
+
+  private cancelCardsDragStart(): void {
+    this.cards.forEach((card) => {
+      const cardNode = card.getNode();
+
+      cardNode.ondragstart = (): boolean => false;
+    });
+  }
+
+  private touchDragHandler = (evt: TouchEvent): void => {
+    const initialTouchMoveHandler = this.createInitialTouchMoveHandler(evt);
+
+    document.addEventListener(
+      'touchend',
+      () => {
+        document.removeEventListener('touchmove', initialTouchMoveHandler);
+      },
+      { once: true },
+    );
+
+    document.addEventListener('touchmove', initialTouchMoveHandler, { once: true });
+  };
+
+  private createInitialTouchMoveHandler =
+    (touchStartEvt: TouchEvent): (() => void) =>
+    () => {
+      const touch = touchStartEvt.changedTouches[0];
+
+      if (!touch || !(touch.target instanceof HTMLElement) || !touch.target.classList.contains('card--active')) {
+        return;
+      }
+
+      this.draggedCardNode = touch.target;
+
+      const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
+      const shiftX = touch.clientX - draggedNodeRect.left;
+      const shiftY = touch.clientY - draggedNodeRect.top;
+      const startingPlaceNode = this.draggedCardNode.parentElement;
+
+      if (!startingPlaceNode) {
+        return;
+      }
+
+      const startingPlaceData = this.findPlaceComponentfromNode(startingPlaceNode);
+      const draggedCard = this.cards.find((cardsItem) => cardsItem.getNode() === this.draggedCardNode);
+
+      if (!draggedCard) {
+        return;
+      }
+
+      this.draggedCardNode.style.position = 'absolute';
+      this.draggedCardNode.style.touchAction = 'none';
+      this.draggedCardNode.style.zIndex = '10';
+      this.draggedCardNode.style.left = `${touch.pageX - shiftX}px`;
+      this.draggedCardNode.style.top = `${touch.pageY - shiftY}px`;
+      document.body.append(this.draggedCardNode);
+      this.currentDropPlace = null;
+      this.addTouchHandlers(shiftX, shiftY, startingPlaceData, draggedCard);
+    };
+
+  private addTouchHandlers = (
+    shiftX: number,
+    shiftY: number,
+    startingPlaceData: { place: BaseComponent | null; index: number },
+    draggedCard: PuzzleCard,
+  ): void => {
+    if (!this.draggedCardNode) {
+      return;
+    }
+
+    const onTouchMove = this.createTouchMoveHandler(shiftX, shiftY);
+
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+
+    this.draggedCardNode.addEventListener(
+      'touchend',
+      () => {
+        if (!this.draggedCardNode) {
+          return;
+        }
+
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.remove('place--hover');
+        }
+
+        this.handleDrop(startingPlaceData, draggedCard);
+        document.removeEventListener('touchmove', onTouchMove);
+      },
+      { once: true },
+    );
+  };
+
+  private createTouchMoveHandler(shiftX: number, shiftY: number): (evt: TouchEvent) => void {
+    return (touchEvent: TouchEvent) => {
+      const touch = touchEvent.changedTouches[0];
+
+      if (!this.draggedCardNode || !touch) {
+        return;
+      }
+
+      this.draggedCardNode.style.left = `${touch.pageX - shiftX}px`;
+      this.draggedCardNode.style.top = `${touch.pageY - shiftY}px`;
+      this.draggedCardNode.style.display = 'none';
+
+      const underNode = document.elementFromPoint(touch.clientX, touch.clientY);
+
+      this.draggedCardNode.style.display = '';
+
+      if (!underNode) {
+        return;
+      }
+
+      const enteredDropPlace = underNode.closest('.drop-place');
+
+      if (this.currentDropPlace !== enteredDropPlace) {
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.remove('place--hover');
+        }
+
+        this.currentDropPlace = enteredDropPlace;
+
+        if (this.currentDropPlace) {
+          this.currentDropPlace.classList.add('place--hover');
+        }
+      }
+    };
+  }
 }

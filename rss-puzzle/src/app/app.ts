@@ -109,7 +109,7 @@ export default class App {
     this.container.removeClass('app-container--opaque');
 
     setTimeout(() => {
-      this.container.removeNodeChildren();
+      this.container.removeChildren();
       this.container.append(pageComponent);
     }, OPACITY_TRANSITION_TIME_MS);
 

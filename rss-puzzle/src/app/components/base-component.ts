@@ -107,7 +107,7 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
     return this.children.length > 0 || this.node.children.length > 0;
   }
 
-  public removeNodeChildren(): void {
+  public removeChildren(): void {
     this.children.forEach((child) => {
       if (child instanceof BaseComponent) {
         child.removeNode();
@@ -120,7 +120,11 @@ export default class BaseComponent<T extends HTMLElement = HTMLElement> {
   }
 
   public removeNode(): void {
-    this.removeNodeChildren();
+    this.removeChildren();
     this.node.remove();
+  }
+
+  public cleanComponentChildrenList(): void {
+    this.children.length = 0;
   }
 }
