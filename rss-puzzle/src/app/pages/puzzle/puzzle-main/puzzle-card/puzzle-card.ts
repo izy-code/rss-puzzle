@@ -1,3 +1,4 @@
+import { span } from '@/app/components/tags';
 import './puzzle-card.scss';
 import BaseComponent from '@/app/components/base-component';
 
@@ -10,11 +11,15 @@ export default class PuzzleCard extends BaseComponent<HTMLDivElement> {
 
   private parentPlace: BaseComponent<HTMLElement> = new BaseComponent<HTMLElement>({});
 
-  constructor(textContent: string, orderNumber: number, className: string) {
-    super({ className: 'card', tag: 'div', textContent });
+  private textContainer: BaseComponent<HTMLSpanElement>;
 
+  constructor(textContent: string, orderNumber: number, className: string) {
+    super({ className: 'card', tag: 'div' });
+
+    this.textContainer = span({ className: 'card__text', textContent });
     this.orderNumber = orderNumber;
     this.addClasses(className);
+    this.append(this.textContainer);
   }
 
   public getOrder(): number {

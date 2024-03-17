@@ -6,7 +6,7 @@ import type { Sentence } from '@/app/utils/json-loader';
 import type JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleCard from './puzzle-card/puzzle-card';
-import { assertIsDefined, getClosestFromEventTarget } from '@/app/utils';
+import { assertIsDefined, getClosestFromEventTarget, getClosestFromTouchEventTarget } from '@/app/utils';
 import ButtonComponent from '@/app/components/button/button';
 import { Pages } from '@/app/router/pages';
 
@@ -132,7 +132,23 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     const sentenceWords = sentence.split(' ');
 
-    return sentenceWords.map((word, index) => new PuzzleCard(word, index, 'main__card card--active'));
+    sentenceWords.map((word, index) => new PuzzleCard(word, index, 'main__card card--active'));
+
+    const resultArray: PuzzleCard[] = [];
+
+    sentenceWords.forEach((word, index) => {
+      const card = new PuzzleCard(word, index, 'main__card card--active card--key card--hole');
+
+      if (index === 0) {
+        card.removeClass('card--hole');
+      } else if (index === sentenceWords.length - 1) {
+        card.removeClass('card--key');
+      }
+
+      resultArray.push(card);
+    });
+
+    return resultArray;
   }
 
   private getShuffledCards(): PuzzleCard[] {
@@ -404,10 +420,12 @@ export default class PuzzleMainComponent extends BaseComponent {
     }
 
     this.completeButton.setAttribute('disabled', '');
-    this.handleOrderedRow();
     this.changeSourcePlacesWidth();
     this.removeCardsClasses();
-    setTimeout(() => this.checkButton.removeAttribute('disabled'), CARD_MOVE_TRANSITION_TIME_MS);
+    setTimeout(() => {
+      this.checkButton.removeAttribute('disabled');
+      this.handleOrderedRow();
+    }, CARD_MOVE_TRANSITION_TIME_MS);
   };
 
   private moveCardToRightPlace = (card: PuzzleCard, rowOffsetX: number): void => {
@@ -433,13 +451,13 @@ export default class PuzzleMainComponent extends BaseComponent {
     const offsetX = rowRect.left + rowOffsetX - baseRect.left;
     const offsetY = rowRect.top - baseRect.top;
 
-    movedNode.style.transition = `transform ${CARD_MOVE_TRANSITION_TIME_MS}ms, background-color ${CARD_MOVE_TRANSITION_TIME_MS}ms`;
+    movedNode.style.transition = `transform 1500ms, background-color ${CARD_MOVE_TRANSITION_TIME_MS}ms`;
     movedNode.style.transform = `translate(${offsetX}px, ${offsetY}px`;
 
     movedNode.addEventListener(
       'transitionend',
       () => {
-        movedNode.style.transition = '';
+        // movedNode.style.transition = '';
         movedNode.style.transform = '';
 
         if (targetPlace) {
@@ -488,11 +506,11 @@ export default class PuzzleMainComponent extends BaseComponent {
   private createInitialMouseMoveHandler =
     (mouseDownEvt: MouseEvent): (() => void) =>
     () => {
-      if (!(mouseDownEvt.target instanceof HTMLElement) || !mouseDownEvt.target.classList.contains('card--active')) {
+      this.draggedCardNode = getClosestFromEventTarget(mouseDownEvt, '.card--active');
+
+      if (!this.draggedCardNode) {
         return;
       }
-
-      this.draggedCardNode = mouseDownEvt.target;
 
       const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
       const shiftX = mouseDownEvt.clientX - draggedNodeRect.left;
@@ -544,7 +562,7 @@ export default class PuzzleMainComponent extends BaseComponent {
         }
 
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('place--hover');
+          this.currentDropPlace.classList.remove('drop-place--hover');
         }
 
         this.handleDrop(startingPlaceData, draggedCard);
@@ -639,7 +657,7 @@ export default class PuzzleMainComponent extends BaseComponent {
       return;
     }
 
-    dropPlace.removeChildren();
+    dropPlace.cleanComponentChildrenList();
     PuzzleMainComponent.handleCardAdd(dropPlace, draggedCard, dropPlaceNumber);
     PuzzleMainComponent.handleCardAdd(startingPlaceData.place, cardFromDropPlace, startingPlaceData.index);
   };
@@ -715,14 +733,14 @@ export default class PuzzleMainComponent extends BaseComponent {
 
       if (this.currentDropPlace !== enteredDropPlace) {
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('place--hover');
+          this.currentDropPlace.classList.remove('drop-place--hover');
           this.draggedCardNode.style.cursor = 'grabbing';
         }
 
         this.currentDropPlace = enteredDropPlace;
 
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.add('place--hover');
+          this.currentDropPlace.classList.add('drop-place--hover');
           this.draggedCardNode.style.cursor = 'cell';
         }
       }
@@ -756,11 +774,11 @@ export default class PuzzleMainComponent extends BaseComponent {
     () => {
       const touch = touchStartEvt.changedTouches[0];
 
-      if (!touch || !(touch.target instanceof HTMLElement) || !touch.target.classList.contains('card--active')) {
+      this.draggedCardNode = getClosestFromTouchEventTarget(touch, '.card--active');
+
+      if (!this.draggedCardNode || !touch) {
         return;
       }
-
-      this.draggedCardNode = touch.target;
 
       const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
       const shiftX = touch.clientX - draggedNodeRect.left;
@@ -810,7 +828,7 @@ export default class PuzzleMainComponent extends BaseComponent {
         }
 
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('place--hover');
+          this.currentDropPlace.classList.remove('drop-place--hover');
         }
 
         this.handleDrop(startingPlaceData, draggedCard);
@@ -844,13 +862,13 @@ export default class PuzzleMainComponent extends BaseComponent {
 
       if (this.currentDropPlace !== enteredDropPlace) {
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('place--hover');
+          this.currentDropPlace.classList.remove('drop-place--hover');
         }
 
         this.currentDropPlace = enteredDropPlace;
 
         if (this.currentDropPlace) {
-          this.currentDropPlace.classList.add('place--hover');
+          this.currentDropPlace.classList.add('drop-place--hover');
         }
       }
     };

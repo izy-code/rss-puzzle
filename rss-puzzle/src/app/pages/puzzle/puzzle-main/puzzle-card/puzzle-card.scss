@@ -2,14 +2,71 @@
 
 .card {
   position: relative;
-  z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 40px;
+
+  &::after {
+    position: absolute;
+    right: -10px;
+    z-index: 10;
+    width: 20px;
+    height: 20px;
+    background-color: $color-yellow;
+    border-right: 2px solid $color-granite;
+    border-radius: 10px;
+    cursor: inherit;
+    transition: background-color 0.6s ease-out, box-shadow 0.6s ease-out;
+    mask-image: linear-gradient(
+    to right, transparent 40%, #ffffff 40%
+  );
+  }
+
+  &--key::after {
+    content: "";
+  }
+
+  &--active {
+    cursor: pointer;
+  }
+
+  &--wrong::after {
+    box-shadow: inset 0 0 2px 2px $color-red;
+  }
+
+  &--right::after {
+    box-shadow: inset 0 0 2px 2px $color-green;
+  }
+
+  &--active::after {
+    background-color: $color-sandy-brown;
+    cursor: pointer;
+  }
+
+  &--active:hover::after,
+  &--active:focus-visible::after {
+    @include media-hover {
+      background-color: $color-pastel-yellow;
+    }
+  }
+
+  &--active:active::after {
+    background-color: $color-chinese-bronze;
+  }
+}
+
+.card__text {
+  display: flex;
+  vertical-align: middle;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
   font-size: 14px;
   background-color: $color-yellow;
   box-shadow: inset 0 0 0 1px $color-granite;
+  cursor: inherit;
   user-select: none;
   transition: background-color 0.6s ease-out, box-shadow 0.6s ease-out;
 
@@ -17,27 +74,40 @@
     font-size: 18px;
   }
 
-  &--active {
+  .card--hole & {
+    padding-left: 10px;
+    background-image: radial-gradient(
+    circle at 0 center,
+    $color-granite,
+    $color-granite 10px, transparent 11px
+  );
+    mask-image: radial-gradient(
+    circle at 0 center,
+    transparent 9px,
+    #000000 10px
+  );
+  }
+
+  .card--wrong & {
+    box-shadow: inset 1px 0 1.5px 2px $color-red;
+  }
+
+  .card--right & {
+    box-shadow: inset 1px 0 1.5px 2px $color-green;
+  }
+
+  .card--active & {
     background-color: $color-sandy-brown;
-    cursor: pointer;
+  }
 
-    &:hover,
-    &:focus-visible {
-      @include media-hover {
-        background-color: $color-pastel-yellow;
-      }
-    }
-
-    &:active {
-      background-color: $color-chinese-bronze;
+  .card--active:hover &,
+  .card--active:focus-visible & {
+    @include media-hover {
+      background-color: $color-pastel-yellow;
     }
   }
 
-  &--wrong {
-    box-shadow: inset 0 0 2px 2px $color-red;
-  }
-
-  &--right {
-    box-shadow: inset 0 0 2px 2px $color-green;
+  .card--active:active & {
+    background-color: $color-chinese-bronze;
   }
 }

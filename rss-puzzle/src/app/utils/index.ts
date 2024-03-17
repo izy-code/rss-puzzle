@@ -34,10 +34,27 @@ export const queryElement = <T extends Element>(
   return queriedElement;
 };
 
-export const getClosestFromEventTarget = (evt: Event, closestSelectors: string): Element | null => {
+export const getClosestFromEventTarget = (evt: Event, closestSelectors: string): HTMLElement | null => {
   const { target } = evt;
 
-  if (!(target instanceof Element)) {
+  if (!(target instanceof HTMLElement)) {
+    return null;
+  }
+
+  return target.closest(closestSelectors);
+};
+
+export const getClosestFromTouchEventTarget = (
+  touch: Touch | undefined,
+  closestSelectors: string,
+): HTMLElement | null => {
+  if (!touch) {
+    return null;
+  }
+
+  const { target } = touch;
+
+  if (!(target instanceof HTMLElement)) {
     return null;
   }
 
