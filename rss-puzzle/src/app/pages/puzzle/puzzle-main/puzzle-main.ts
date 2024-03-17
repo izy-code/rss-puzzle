@@ -1,6 +1,6 @@
 import './puzzle-main.scss';
 import BaseComponent from '@/app/components/base-component';
-import { div, span } from '@/app/components/tags';
+import { div, p, span } from '@/app/components/tags';
 import type Router from '@/app/router/router';
 import type { Sentence } from '@/app/utils/json-loader';
 import type JsonLoader from '@/app/utils/json-loader';
@@ -24,6 +24,8 @@ export default class PuzzleMainComponent extends BaseComponent {
   private currentSentenceNumber = 0;
 
   private listeners: Record<string, EventListener> = {};
+
+  private sentenceTranslation: BaseComponent<HTMLParagraphElement>;
 
   private rows: BaseComponent<HTMLDivElement>[];
 
@@ -59,6 +61,8 @@ export default class PuzzleMainComponent extends BaseComponent {
 
   private currentDropPlace: Element | null = null;
 
+  private isFirstSentenceLoad = true;
+
   constructor(router: Router, storage: LocalStorage, loader: JsonLoader, levelNumber: number, pageNumber: number) {
     super({ className: 'puzzle-page__main main', tag: 'main' });
 
@@ -70,6 +74,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.sentences = loader.getSentences(pageNumber);
     this.rows = this.createRows();
     this.board = div({ className: 'main__board' }, ...this.rows);
+    this.sentenceTranslation = p({ className: 'main__translation' });
 
     const rowNumbers = div({ className: 'main__row-numbers' }, ...this.createRowNumbers());
     const buttonsContainer = div({ className: 'main__buttons-container' });
@@ -77,7 +82,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.checkButton.setAttribute('disabled', '');
     buttonsContainer.appendChildren([this.completeButton, this.checkButton]);
 
-    this.appendChildren([rowNumbers, this.board, this.source, buttonsContainer]);
+    this.appendChildren([this.sentenceTranslation, rowNumbers, this.board, this.source, buttonsContainer]);
 
     setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
@@ -113,6 +118,18 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.currentRow.addListener('click', this.listeners.onCurrentRowClick);
 
     this.cancelCardsDragStart();
+
+    if (this.isFirstSentenceLoad) {
+      this.showTranslation();
+    } else {
+      this.hideTranslation();
+
+      setTimeout(() => {
+        this.showTranslation();
+      }, START_OPACITY_TRANSITION_TIME_MS);
+    }
+
+    this.isFirstSentenceLoad = false;
   }
 
   private createRows(): BaseComponent<HTMLDivElement>[] {
@@ -425,7 +442,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     setTimeout(() => {
       this.checkButton.removeAttribute('disabled');
       this.handleOrderedRow();
-    }, CARD_MOVE_TRANSITION_TIME_MS);
+    }, CARD_MOVE_TRANSITION_TIME_MS + 100);
   };
 
   private moveCardToRightPlace = (card: PuzzleCard, rowOffsetX: number): void => {
@@ -872,5 +889,19 @@ export default class PuzzleMainComponent extends BaseComponent {
         }
       }
     };
+  }
+
+  private showTranslation(): void {
+    const currentSentenceData = this.sentences[this.currentSentenceNumber];
+
+    if (currentSentenceData) {
+      this.sentenceTranslation.setTextContent(currentSentenceData.textExampleTranslate);
+    }
+
+    this.sentenceTranslation.addClass('main__translation--opaque');
+  }
+
+  private hideTranslation(): void {
+    this.sentenceTranslation.removeClass('main__translation--opaque');
   }
 }
