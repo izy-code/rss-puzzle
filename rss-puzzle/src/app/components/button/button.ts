@@ -4,14 +4,14 @@ import './button.scss';
 
 interface Props {
   className?: string;
-  textContent: string;
+  textContent?: string;
   buttonType?: 'button' | 'submit' | 'reset';
   clickHandler?: (evt?: Event) => void;
 }
 
 export default function ButtonComponent({
   className,
-  textContent,
+  textContent = '',
   buttonType = 'button',
   clickHandler,
 }: Props): BaseComponent<HTMLButtonElement> {

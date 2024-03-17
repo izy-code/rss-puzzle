@@ -84,4 +84,47 @@
       background-color: $color-dark-blue;
     }
   }
+
+  &--icon {
+    display: grid;
+    justify-content: center;
+    align-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+
+    &::before {
+      content: "";
+      grid-area: 1 / 1 / 2 / 2;
+      width: 36px;
+      height: 36px;
+      background-color: $color-black;
+      transition: background-color 0.6s ease-out;
+      mask-repeat: no-repeat;
+    }
+
+    &::after {
+      grid-area: 1 / 1 / 2 / 2;
+      width: 36px;
+      height: 2px;
+      margin-top: 5px;
+      background-color: $color-black-olive;
+      transition: background-color 0.6s ease-out;
+      mask-repeat: no-repeat;
+    }
+
+    &_text-on::before,
+    &_text-off::before {
+      mask-image: url("../../../assets/icons/text-on.svg");
+    }
+
+    &_text-off::before {
+      background-color: $color-granite;
+    }
+
+    &_text-off::after {
+      content: "";
+      background-color: $color-granite;
+    }
+  }
 }

@@ -91,6 +91,13 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     document.addEventListener('mousedown', this.mouseDragHandler);
     document.addEventListener('touchstart', this.touchDragHandler);
+    document.addEventListener('translation-click', () => {
+      if (this.storage.getField('isTranslationOn') === true) {
+        this.showTranslation();
+      } else {
+        this.hideTranslation();
+      }
+    });
   }
 
   private showSentence(sentenceNumber: number): void {
@@ -119,14 +126,16 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.cancelCardsDragStart();
 
-    if (this.isFirstSentenceLoad) {
+    if (this.isFirstSentenceLoad && this.storage.getField('isTranslationOn') === true) {
       this.showTranslation();
-    } else {
+    } else if (this.storage.getField('isTranslationOn') === true) {
       this.hideTranslation();
 
       setTimeout(() => {
         this.showTranslation();
       }, START_OPACITY_TRANSITION_TIME_MS);
+    } else {
+      this.hideTranslation();
     }
 
     this.isFirstSentenceLoad = false;
@@ -330,6 +339,8 @@ export default class PuzzleMainComponent extends BaseComponent {
         place.removeClass('drop-place');
       }
     });
+
+    this.showTranslation();
   }
 
   private removeCardsClasses(): void {

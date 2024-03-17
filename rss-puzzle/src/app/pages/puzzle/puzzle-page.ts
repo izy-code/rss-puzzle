@@ -1,11 +1,11 @@
 import './puzzle-page.scss';
 import BaseComponent from '@/app/components/base-component';
-import { header } from '@/app/components/tags';
 import type Router from '@/app/router/router';
 import JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleMainComponent from './puzzle-main/puzzle-main';
 import { Pages } from '@/app/router/pages';
+import PuzzleHeaderComponent from './puzzle-header/puzzle-header';
 
 const LEVELS_COUNT = 5;
 
@@ -35,7 +35,7 @@ export default class PuzzlePageComponent extends BaseComponent {
           return;
         }
 
-        const headerComponent = header({ className: 'puzzle-page__header' });
+        const headerComponent = new PuzzleHeaderComponent(router, storage, loader, levelNumber, pageNumber);
 
         const mainComponent = new PuzzleMainComponent(router, storage, loader, levelNumber, pageNumber);
 
