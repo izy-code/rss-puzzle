@@ -26,6 +26,11 @@ export default class LocalStorage {
     this.saveData();
   }
 
+  public clearAllData(): void {
+    this.dataMap = new Map();
+    localStorage.removeItem(APP_KEY);
+  }
+
   public getLoginData(): { name: string; surname: string } | null {
     const loginData = this.getField('loginData');
 

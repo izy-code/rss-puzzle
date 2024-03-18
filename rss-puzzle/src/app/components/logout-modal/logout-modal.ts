@@ -91,7 +91,7 @@ export default class LogoutModalComponent extends BaseComponent {
   };
 
   private onConfirmButtonClick = (): void => {
-    this.storage.deleteField('loginData');
+    this.storage.clearAllData();
     this.router.navigate(Pages.LOGIN);
   };
 }
