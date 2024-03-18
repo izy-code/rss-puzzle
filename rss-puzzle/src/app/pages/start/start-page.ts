@@ -2,7 +2,7 @@ import './start-page.scss';
 import BaseComponent, { type ChildrenType } from '@/app/components/base-component';
 import ButtonComponent from '@/app/components/button/button';
 import LogoutModalComponent from '@/app/components/logout-modal/logout-modal';
-import { h1, main, p, span } from '@/app/components/tags';
+import { a, h1, main, p, span } from '@/app/components/tags';
 import { Pages } from '@/app/router/pages';
 import type Router from '@/app/router/router';
 import type LocalStorage from '@/app/utils/local-storage';
@@ -57,6 +57,7 @@ export default class StartPageComponent extends BaseComponent {
       startButton,
       logoutText,
       logoutButton,
+      StartPageComponent.createReviewerNote(),
     ];
   }
 
@@ -96,6 +97,28 @@ export default class StartPageComponent extends BaseComponent {
     });
 
     return [descriptionPart1, descriptionPart2, descriptionPart3];
+  }
+
+  private static createReviewerNote(): ChildrenType {
+    const videoLink = a({
+      className: 'start-page__link',
+      href: 'https://youtu.be/81om13PW1h0?si=sqHbdz6WEBQDhAW6&t=2447',
+      textContent: `the video`,
+      target: '_blank',
+    });
+    const noteEnding = document.createTextNode(
+      ' that such applications should not navigate to the start page upon refreshing.',
+    );
+    const note = p(
+      {
+        className: 'start-page__reviewer-note',
+        textContent: `Dear reviewer, please note that this is a SPA with a router and a changing hash part of the path. The task author mentioned in `,
+      },
+      videoLink,
+      noteEnding,
+    );
+
+    return note;
   }
 
   private onLogoutButtonClick = (): void => {

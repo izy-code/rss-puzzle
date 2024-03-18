@@ -949,10 +949,15 @@ export default class PuzzleMainComponent extends BaseComponent {
 
   private showPronounceButton(): void {
     this.pronounceButton.addClass('main__button-pronounce--opaque');
+    this.pronounceButton.addClass('main__button-pronounce--visible');
   }
 
   private hidePronounceButton(): void {
     this.pronounceButton.removeClass('main__button-pronounce--opaque');
+
+    setTimeout(() => {
+      this.pronounceButton.removeClass('main__button-pronounce--visible');
+    }, START_OPACITY_TRANSITION_TIME_MS);
   }
 
   private createPronounceButton = (): BaseComponent<HTMLButtonElement> => {

@@ -2,6 +2,7 @@ import './puzzle-header.scss';
 import BaseComponent from '@/app/components/base-component';
 import ButtonComponent from '@/app/components/button/button';
 import { div, span } from '@/app/components/tags';
+import { Pages } from '@/app/router/pages';
 import type Router from '@/app/router/router';
 import { dispatchCustomEvent } from '@/app/utils';
 import type JsonLoader from '@/app/utils/json-loader';
@@ -20,6 +21,8 @@ export default class PuzzleHeaderComponent extends BaseComponent {
 
   private pronounceButton: BaseComponent<HTMLButtonElement>;
 
+  private startButton: BaseComponent<HTMLButtonElement>;
+
   constructor(router: Router, storage: LocalStorage, loader: JsonLoader, levelNumber: number, pageNumber: number) {
     super({ className: 'puzzle-page__header header', tag: 'header' });
 
@@ -30,11 +33,12 @@ export default class PuzzleHeaderComponent extends BaseComponent {
 
     const buttonsContainer = div({ className: 'header__buttons-container' });
 
+    this.startButton = this.createStartButton();
     this.translateButton = this.createTranslationButton();
     this.pronounceButton = this.createPronounceButton();
 
     buttonsContainer.appendChildren([this.translateButton, this.pronounceButton]);
-    this.appendChildren([buttonsContainer]);
+    this.appendChildren([this.startButton, buttonsContainer]);
   }
 
   private createTranslationButton(): BaseComponent<HTMLButtonElement> {
@@ -94,6 +98,20 @@ export default class PuzzleHeaderComponent extends BaseComponent {
       pronounceButtonText.setTextContent(isPronounceOn ? 'Pronounce on' : 'Pronounce off');
 
       dispatchCustomEvent(pronounceButton.getNode(), 'pronounce-click');
+    });
+
+    return pronounceButton;
+  }
+
+  private createStartButton(): BaseComponent<HTMLButtonElement> {
+    const pronounceButton = ButtonComponent({
+      className: `header__start-button button`,
+      textContent: 'Return to Start Page',
+      buttonType: 'button',
+    });
+
+    pronounceButton.addListener('click', () => {
+      this.router.navigate(Pages.START);
     });
 
     return pronounceButton;

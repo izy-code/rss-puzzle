@@ -2,6 +2,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
+  max-width: 1080px;
   margin-bottom: 20px;
 
   @media (width >= 1120px) {
@@ -13,4 +15,8 @@
   display: flex;
   gap: 10px;
   align-items: center;
+}
+
+.header__start-button {
+  height: 48px;
 }
