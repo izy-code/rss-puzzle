@@ -932,7 +932,7 @@ export default class PuzzleMainComponent extends BaseComponent {
 
   private createPronounceButton = (): BaseComponent<HTMLButtonElement> => {
     const pronounceButton = ButtonComponent({
-      className: 'main__button-pronounce main__button-pronounce--icon-on button',
+      className: 'main__button-pronounce main__button-pronounce button',
       buttonType: 'button',
     });
 
@@ -950,7 +950,12 @@ export default class PuzzleMainComponent extends BaseComponent {
 
       audio
         .play()
-        .then(() => {})
+        .then(() => {
+          pronounceButton.addClass('main__button-pronounce--icon-on');
+          audio.onended = (): void => {
+            pronounceButton.removeClass('main__button-pronounce--icon-on');
+          };
+        })
         .catch(() => {});
     });
 
