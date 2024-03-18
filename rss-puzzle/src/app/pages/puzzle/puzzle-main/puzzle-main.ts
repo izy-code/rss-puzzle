@@ -2,7 +2,7 @@ import './puzzle-main.scss';
 import BaseComponent from '@/app/components/base-component';
 import { div, p, span } from '@/app/components/tags';
 import type Router from '@/app/router/router';
-import type { Sentence } from '@/app/utils/json-loader';
+import { BASE_URL, type Sentence } from '@/app/utils/json-loader';
 import type JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleCard from './puzzle-card/puzzle-card';
@@ -26,6 +26,8 @@ export default class PuzzleMainComponent extends BaseComponent {
   private listeners: Record<string, EventListener> = {};
 
   private sentenceTranslation: BaseComponent<HTMLParagraphElement>;
+
+  private pronounceButton: BaseComponent<HTMLButtonElement>;
 
   private rows: BaseComponent<HTMLDivElement>[];
 
@@ -74,6 +76,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.sentences = loader.getSentences(pageNumber);
     this.rows = this.createRows();
     this.board = div({ className: 'main__board' }, ...this.rows);
+    this.pronounceButton = this.createPronounceButton();
     this.sentenceTranslation = p({ className: 'main__translation' });
 
     const rowNumbers = div({ className: 'main__row-numbers' }, ...this.createRowNumbers());
@@ -82,13 +85,24 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.checkButton.setAttribute('disabled', '');
     buttonsContainer.appendChildren([this.completeButton, this.checkButton]);
 
-    this.appendChildren([this.sentenceTranslation, rowNumbers, this.board, this.source, buttonsContainer]);
+    this.appendChildren([
+      this.pronounceButton,
+      this.sentenceTranslation,
+      rowNumbers,
+      this.board,
+      this.source,
+      buttonsContainer,
+    ]);
 
     setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
     this.checkButton.addListener('click', this.onCheckButtonClick);
     this.completeButton.addListener('click', this.onCompleteButtonClick);
 
+    this.initConstructorListeners();
+  }
+
+  private initConstructorListeners(): void {
     document.addEventListener('mousedown', this.mouseDragHandler);
     document.addEventListener('touchstart', this.touchDragHandler);
     document.addEventListener('translation-click', () => {
@@ -915,4 +929,31 @@ export default class PuzzleMainComponent extends BaseComponent {
   private hideTranslation(): void {
     this.sentenceTranslation.removeClass('main__translation--opaque');
   }
+
+  private createPronounceButton = (): BaseComponent<HTMLButtonElement> => {
+    const pronounceButton = ButtonComponent({
+      className: 'main__button-pronounce main__button-pronounce--icon-on button',
+      buttonType: 'button',
+    });
+
+    pronounceButton.addListener('click', () => {
+      const currentSentenceData = this.sentences[this.currentSentenceNumber];
+      let currentAudioURL = currentSentenceData?.audioExample;
+
+      if (!currentAudioURL) {
+        return;
+      }
+
+      currentAudioURL = BASE_URL + currentAudioURL;
+
+      const audio = new Audio(currentAudioURL);
+
+      audio
+        .play()
+        .then(() => {})
+        .catch(() => {});
+    });
+
+    return pronounceButton;
+  };
 }
