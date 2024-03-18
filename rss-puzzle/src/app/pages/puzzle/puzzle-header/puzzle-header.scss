@@ -3,6 +3,10 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+
+  @media (width >= 1120px) {
+    padding-left: 50px;
+  }
 }
 
 .header__buttons-container {

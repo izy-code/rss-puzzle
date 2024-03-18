@@ -118,13 +118,26 @@
       mask-image: url("../../../assets/icons/text-on.svg");
     }
 
-    &_text-off::before {
+    &_text-off::before,
+    &_sound-off::before {
       background-color: $color-granite;
     }
 
-    &_text-off::after {
+    &_text-off::after,
+    &_sound-off::after {
       content: "";
       background-color: $color-granite;
+    }
+
+    &_sound-on::before,
+    &_sound-off::before {
+      mask-image: url("../../../assets/icons/pronounce-off.svg");
+    }
+
+    &_sound-off::after {
+      width: 38px;
+      margin-top: 0;
+      transform: rotate(-45deg);
     }
   }
 }

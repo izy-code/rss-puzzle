@@ -19,14 +19,21 @@
   height: 48px;
   margin: 0 auto;
   padding: 0;
+  opacity: 0;
   cursor: pointer;
+  transition:
+    background-color 0.6s ease-out,
+    color 0.6s ease-out,
+    box-shadow 0.6s ease-out,
+    opacity 0.6s ease-out;
 
   @media (width >= 1120px) {
     grid-column: 2;
   }
 
   &.main__button-pronounce--icon-on {
-    background-color: $color-blue;
+    background-color: $color-yellow;
+    cursor: default;
   }
 
   &::before {
@@ -42,6 +49,10 @@
   &--icon-on::before {
     background-color: $color-black;
     mask-image: url("../../../../assets/icons/pronounce-on.svg");
+  }
+
+  &--opaque {
+    opacity: 1;
   }
 }
 

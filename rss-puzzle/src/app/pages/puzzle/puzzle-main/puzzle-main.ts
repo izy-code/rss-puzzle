@@ -112,6 +112,13 @@ export default class PuzzleMainComponent extends BaseComponent {
         this.hideTranslation();
       }
     });
+    document.addEventListener('pronounce-click', () => {
+      if (this.storage.getField('isPronounceOn') === true) {
+        this.showPronounceButton();
+      } else {
+        this.hidePronounceButton();
+      }
+    });
   }
 
   private showSentence(sentenceNumber: number): void {
@@ -140,6 +147,11 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     this.cancelCardsDragStart();
 
+    this.handleHintsVisibility();
+    this.isFirstSentenceLoad = false;
+  }
+
+  private handleHintsVisibility(): void {
     if (this.isFirstSentenceLoad && this.storage.getField('isTranslationOn') === true) {
       this.showTranslation();
     } else if (this.storage.getField('isTranslationOn') === true) {
@@ -152,7 +164,11 @@ export default class PuzzleMainComponent extends BaseComponent {
       this.hideTranslation();
     }
 
-    this.isFirstSentenceLoad = false;
+    if (this.storage.getField('isPronounceOn') === true) {
+      this.showPronounceButton();
+    } else {
+      this.hidePronounceButton();
+    }
   }
 
   private createRows(): BaseComponent<HTMLDivElement>[] {
@@ -355,6 +371,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     });
 
     this.showTranslation();
+    this.showPronounceButton();
   }
 
   private removeCardsClasses(): void {
@@ -930,13 +947,21 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.sentenceTranslation.removeClass('main__translation--opaque');
   }
 
+  private showPronounceButton(): void {
+    this.pronounceButton.addClass('main__button-pronounce--opaque');
+  }
+
+  private hidePronounceButton(): void {
+    this.pronounceButton.removeClass('main__button-pronounce--opaque');
+  }
+
   private createPronounceButton = (): BaseComponent<HTMLButtonElement> => {
     const pronounceButton = ButtonComponent({
-      className: 'main__button-pronounce main__button-pronounce button',
+      className: 'main__button-pronounce button button--continue',
       buttonType: 'button',
     });
 
-    pronounceButton.addListener('click', () => {
+    const onPronounceClick = (): void => {
       const currentSentenceData = this.sentences[this.currentSentenceNumber];
       let currentAudioURL = currentSentenceData?.audioExample;
 
@@ -952,12 +977,16 @@ export default class PuzzleMainComponent extends BaseComponent {
         .play()
         .then(() => {
           pronounceButton.addClass('main__button-pronounce--icon-on');
+          pronounceButton.removeListener('click', onPronounceClick);
           audio.onended = (): void => {
             pronounceButton.removeClass('main__button-pronounce--icon-on');
+            pronounceButton.addListener('click', onPronounceClick);
           };
         })
         .catch(() => {});
-    });
+    };
+
+    pronounceButton.addListener('click', onPronounceClick);
 
     return pronounceButton;
   };

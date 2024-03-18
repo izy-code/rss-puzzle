@@ -18,6 +18,8 @@ export default class PuzzleHeaderComponent extends BaseComponent {
 
   private translateButton: BaseComponent<HTMLButtonElement>;
 
+  private pronounceButton: BaseComponent<HTMLButtonElement>;
+
   constructor(router: Router, storage: LocalStorage, loader: JsonLoader, levelNumber: number, pageNumber: number) {
     super({ className: 'puzzle-page__header header', tag: 'header' });
 
@@ -29,8 +31,9 @@ export default class PuzzleHeaderComponent extends BaseComponent {
     const buttonsContainer = div({ className: 'header__buttons-container' });
 
     this.translateButton = this.createTranslationButton();
+    this.pronounceButton = this.createPronounceButton();
 
-    buttonsContainer.appendChildren([this.translateButton]);
+    buttonsContainer.appendChildren([this.translateButton, this.pronounceButton]);
     this.appendChildren([buttonsContainer]);
   }
 
@@ -57,11 +60,42 @@ export default class PuzzleHeaderComponent extends BaseComponent {
       this.storage.setField('isTranslationOn', isTranslationOn);
       translateButton.toggleClass('button--icon_text-on');
       translateButton.toggleClass('button--icon_text-off');
-      translateButtonText.setTextContent(isTranslationOn ? 'Sound on' : 'Sound off');
+      translateButtonText.setTextContent(isTranslationOn ? 'Translation on' : 'Translation off');
 
       dispatchCustomEvent(translateButton.getNode(), 'translation-click');
     });
 
     return translateButton;
+  }
+
+  private createPronounceButton(): BaseComponent<HTMLButtonElement> {
+    let isPronounceOn = this.storage.getField('isPronounceOn');
+
+    if (isPronounceOn === null || typeof isPronounceOn !== 'boolean') {
+      isPronounceOn = true;
+      this.storage.setField('isPronounceOn', true);
+    }
+
+    const pronounceButtonText = span({
+      className: 'visually-hidden',
+      textContent: `Pronounce ${isPronounceOn ? 'on' : 'off'}`,
+    });
+    const pronounceButton = ButtonComponent({
+      className: `header__pronounce-button button button--icon button--icon_sound-${isPronounceOn ? 'on' : 'off'}`,
+    });
+
+    pronounceButton.append(pronounceButtonText);
+
+    pronounceButton.addListener('click', () => {
+      isPronounceOn = !isPronounceOn;
+      this.storage.setField('isPronounceOn', isPronounceOn);
+      pronounceButton.toggleClass('button--icon_sound-on');
+      pronounceButton.toggleClass('button--icon_sound-off');
+      pronounceButtonText.setTextContent(isPronounceOn ? 'Pronounce on' : 'Pronounce off');
+
+      dispatchCustomEvent(pronounceButton.getNode(), 'pronounce-click');
+    });
+
+    return pronounceButton;
   }
 }
