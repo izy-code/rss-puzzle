@@ -4,7 +4,7 @@ export type Props<T extends HTMLElement = HTMLElement> = Partial<
   textContent?: string;
   tag?: keyof HTMLElementTagNameMap;
 };
-export type ElementFnProps<T extends HTMLElement = HTMLElement> = Omit<Props<T>, 'tag'>;
+export type TagProps<T extends HTMLElement = HTMLElement> = Omit<Props<T>, 'tag'>;
 export type ChildrenType = BaseComponent | HTMLElement | Text;
 
 export default class BaseComponent<T extends HTMLElement = HTMLElement> {

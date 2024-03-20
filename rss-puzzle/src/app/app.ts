@@ -5,7 +5,8 @@ import { Pages } from './router/pages';
 import { div } from './components/tags';
 import LocalStorage from './utils/local-storage';
 
-const OPACITY_TRANSITION_TIME_MS = 600;
+const COMPONENT_RENEWAL_TRANSITION_TIME_MS = 600;
+const OPACITY_TRANSITION_TIME_MS = 700;
 
 export default class App {
   private container: BaseComponent;
@@ -111,10 +112,10 @@ export default class App {
     setTimeout(() => {
       this.container.removeChildren();
       this.container.append(pageComponent);
-    }, OPACITY_TRANSITION_TIME_MS);
+    }, COMPONENT_RENEWAL_TRANSITION_TIME_MS);
 
     setTimeout(() => {
       this.container.addClass('app-container--opaque');
-    }, OPACITY_TRANSITION_TIME_MS + 100);
+    }, OPACITY_TRANSITION_TIME_MS);
   }
 }

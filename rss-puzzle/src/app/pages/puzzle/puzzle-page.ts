@@ -35,7 +35,7 @@ export default class PuzzlePageComponent extends BaseComponent {
           return;
         }
 
-        const headerComponent = new PuzzleHeaderComponent(router, storage, loader, levelNumber, pageNumber);
+        const headerComponent = new PuzzleHeaderComponent(router, storage);
 
         const mainComponent = new PuzzleMainComponent(router, storage, loader, levelNumber, pageNumber);
 

@@ -6,13 +6,14 @@ import { BASE_URL, type Sentence } from '@/app/utils/json-loader';
 import type JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 import PuzzleCard from './puzzle-card/puzzle-card';
-import { assertIsDefined, getClosestFromEventTarget, getClosestFromTouchEventTarget } from '@/app/utils';
+import { assertIsDefined, getClosestFromEventTarget } from '@/app/utils';
 import ButtonComponent from '@/app/components/button/button';
 import { Pages } from '@/app/router/pages';
 
 const START_OPACITY_TRANSITION_TIME_MS = 600;
 const SENTENCE_OPACITY_TRANSITION_TIME_MS = 100;
 const CARD_MOVE_TRANSITION_TIME_MS = 1500;
+const DELAY_AFTER_CARD_MOVE = 100;
 
 export default class PuzzleMainComponent extends BaseComponent {
   private router: Router;
@@ -94,7 +95,7 @@ export default class PuzzleMainComponent extends BaseComponent {
       buttonsContainer,
     ]);
 
-    setTimeout(() => this.showSentence(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
+    setTimeout(() => this.handleNewSentenceShow(this.currentSentenceNumber), START_OPACITY_TRANSITION_TIME_MS);
 
     this.checkButton.addListener('click', this.onCheckButtonClick);
     this.completeButton.addListener('click', this.onCompleteButtonClick);
@@ -103,8 +104,8 @@ export default class PuzzleMainComponent extends BaseComponent {
   }
 
   private initConstructorListeners(): void {
-    document.addEventListener('mousedown', this.mouseDragHandler);
-    document.addEventListener('touchstart', this.touchDragHandler);
+    document.addEventListener('mousedown', this.cursorDragHandler);
+    document.addEventListener('touchstart', this.cursorDragHandler);
     document.addEventListener('translation-click', () => {
       if (this.storage.getField('isTranslationOn') === true) {
         this.showTranslation();
@@ -121,7 +122,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     });
   }
 
-  private showSentence(sentenceNumber: number): void {
+  private handleNewSentenceShow(sentenceNumber: number): void {
     this.source.addClass('main__source--start');
 
     const currentRow = this.rows[sentenceNumber];
@@ -345,11 +346,11 @@ export default class PuzzleMainComponent extends BaseComponent {
     }
 
     if (isRowOrdered) {
-      this.handleOrderedRow();
+      this.onSentenceInRightOrder();
     }
   };
 
-  private handleOrderedRow(): void {
+  private onSentenceInRightOrder(): void {
     this.checkButton.setTextContent('Continue');
     this.checkButton.addClass('button--continue');
     this.checkButton.removeListener('click', this.onCheckButtonClick);
@@ -402,7 +403,7 @@ export default class PuzzleMainComponent extends BaseComponent {
 
     const boardWidth = entries[0].contentRect.width;
 
-    this.handleFilledSentences(boardWidth);
+    this.handleFilledSentencesResize(boardWidth);
 
     let sumWidth = 0;
 
@@ -419,7 +420,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     });
   }
 
-  private handleFilledSentences = (boardWidth: number): void => {
+  private handleFilledSentencesResize = (boardWidth: number): void => {
     for (let sentenceNumber = 0; sentenceNumber < this.currentSentenceNumber; sentenceNumber += 1) {
       const row = this.rows[sentenceNumber];
       let sumWidth = 0;
@@ -461,7 +462,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.checkButton.removeClass('button--continue');
     this.checkButton.addListener('click', this.onCheckButtonClick);
     this.checkButton.removeListener('click', this.onContinueButtonClick);
-    setTimeout(() => this.showSentence(this.currentSentenceNumber), SENTENCE_OPACITY_TRANSITION_TIME_MS);
+    setTimeout(() => this.handleNewSentenceShow(this.currentSentenceNumber), SENTENCE_OPACITY_TRANSITION_TIME_MS);
   };
 
   private onCompleteButtonClick = (): void => {
@@ -483,8 +484,8 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.removeCardsClasses();
     setTimeout(() => {
       this.checkButton.removeAttribute('disabled');
-      this.handleOrderedRow();
-    }, CARD_MOVE_TRANSITION_TIME_MS + 100);
+      this.onSentenceInRightOrder();
+    }, CARD_MOVE_TRANSITION_TIME_MS + DELAY_AFTER_CARD_MOVE);
   };
 
   private moveCardToRightPlace = (card: PuzzleCard, rowOffsetX: number): void => {
@@ -495,13 +496,17 @@ export default class PuzzleMainComponent extends BaseComponent {
     }
 
     if (card.getIsRightPlace()) {
-      this.moveAndAppend(card, null, rowOffsetX);
+      this.moveCardToTargetPlace(card, null, rowOffsetX);
     }
 
-    this.moveAndAppend(card, rightPlace, rowOffsetX);
+    this.moveCardToTargetPlace(card, rightPlace, rowOffsetX);
   };
 
-  private moveAndAppend = (movedCard: PuzzleCard, targetPlace: BaseComponent | null, rowOffsetX: number): void => {
+  private moveCardToTargetPlace = (
+    movedCard: PuzzleCard,
+    targetPlace: BaseComponent | null,
+    rowOffsetX: number,
+  ): void => {
     const movedNode = movedCard.getNode();
 
     const baseRect = movedNode.getBoundingClientRect();
@@ -510,7 +515,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     const offsetX = rowRect.left + rowOffsetX - baseRect.left;
     const offsetY = rowRect.top - baseRect.top;
 
-    movedNode.style.transition = `transform 1500ms, background-color ${CARD_MOVE_TRANSITION_TIME_MS}ms`;
+    movedNode.style.transition = `transform ${CARD_MOVE_TRANSITION_TIME_MS}ms, background-color ${CARD_MOVE_TRANSITION_TIME_MS}ms`;
     movedNode.style.transform = `translate(${offsetX}px, ${offsetY}px`;
 
     movedNode.addEventListener(
@@ -548,58 +553,79 @@ export default class PuzzleMainComponent extends BaseComponent {
     }
   };
 
-  private mouseDragHandler = (evt: MouseEvent): void => {
-    const initialMouseMoveHandler = this.createInitialMouseMoveHandler(evt);
+  private cursorDragHandler = (evt: MouseEvent | TouchEvent): void => {
+    const cursorEndEventType = evt instanceof MouseEvent ? 'mouseup' : 'touchend';
+    const cursorMoveEventType = evt instanceof MouseEvent ? 'mousemove' : 'touchmove';
+
+    const initialCursorMoveHandler = this.createInitialCursorMoveHandler(evt);
 
     document.addEventListener(
-      'mouseup',
+      cursorEndEventType,
       () => {
-        document.removeEventListener('mousemove', initialMouseMoveHandler);
+        document.removeEventListener(cursorMoveEventType, initialCursorMoveHandler);
       },
       { once: true },
     );
 
-    document.addEventListener('mousemove', initialMouseMoveHandler, { once: true });
+    document.addEventListener(cursorMoveEventType, initialCursorMoveHandler, { once: true });
   };
 
-  private createInitialMouseMoveHandler =
-    (mouseDownEvt: MouseEvent): (() => void) =>
+  private createInitialCursorMoveHandler =
+    (evt: MouseEvent | TouchEvent): (() => void) =>
     () => {
-      this.draggedCardNode = getClosestFromEventTarget(mouseDownEvt, '.card--active');
+      const cursorData = evt instanceof MouseEvent ? evt : evt.changedTouches[0];
+
+      if (!cursorData) {
+        return;
+      }
+
+      this.draggedCardNode = getClosestFromEventTarget(cursorData, '.card--active');
 
       if (!this.draggedCardNode) {
         return;
       }
 
-      const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
-      const shiftX = mouseDownEvt.clientX - draggedNodeRect.left;
-      const shiftY = mouseDownEvt.clientY - draggedNodeRect.top;
       const startingPlaceNode = this.draggedCardNode.parentElement;
+      const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
+      const shiftX = cursorData.clientX - draggedNodeRect.left;
+      const shiftY = cursorData.clientY - draggedNodeRect.top;
 
       if (!startingPlaceNode) {
         return;
       }
 
-      const startingPlaceData = this.findPlaceComponentfromNode(startingPlaceNode);
-
+      const startingPlaceData = this.findPlaceComponentFromNode(startingPlaceNode);
       const draggedCard = this.cards.find((cardsItem) => cardsItem.getNode() === this.draggedCardNode);
 
       if (!draggedCard) {
         return;
       }
 
-      this.draggedCardNode.style.position = 'absolute';
-      this.draggedCardNode.style.cursor = 'grabbing';
-      this.draggedCardNode.style.zIndex = '10';
-      this.draggedCardNode.style.left = `${mouseDownEvt.pageX - shiftX}px`;
-      this.draggedCardNode.style.top = `${mouseDownEvt.pageY - shiftY}px`;
-      document.body.append(this.draggedCardNode);
+      this.styleAndAppendCard(cursorData, shiftX, shiftY);
       this.currentDropPlace = null;
+      this.addCursorHandlers(evt, shiftX, shiftY, startingPlaceData, draggedCard);
 
-      this.addMouseHandlers(shiftX, shiftY, startingPlaceData, draggedCard);
+      if (evt instanceof MouseEvent) {
+        this.draggedCardNode.style.cursor = 'grabbing';
+      } else {
+        this.draggedCardNode.style.touchAction = 'none';
+      }
     };
 
-  private addMouseHandlers = (
+  private styleAndAppendCard = (cursorData: MouseEvent | Touch, shiftX: number, shiftY: number): void => {
+    if (!this.draggedCardNode) {
+      return;
+    }
+
+    this.draggedCardNode.style.position = 'absolute';
+    this.draggedCardNode.style.zIndex = '10';
+    this.draggedCardNode.style.left = `${cursorData.pageX - shiftX}px`;
+    this.draggedCardNode.style.top = `${cursorData.pageY - shiftY}px`;
+    document.body.append(this.draggedCardNode);
+  };
+
+  private addCursorHandlers = (
+    evt: MouseEvent | TouchEvent,
     shiftX: number,
     shiftY: number,
     startingPlaceData: { place: BaseComponent | null; index: number },
@@ -608,13 +634,15 @@ export default class PuzzleMainComponent extends BaseComponent {
     if (!this.draggedCardNode) {
       return;
     }
+    const cursorEndEventType = evt instanceof MouseEvent ? 'mouseup' : 'touchend';
+    const cursorMoveEventType = evt instanceof MouseEvent ? 'mousemove' : 'touchmove';
 
-    const onMouseMove = this.createMouseMoveHandler(shiftX, shiftY);
+    const onCursorMove = this.createCursorMoveHandler(shiftX, shiftY);
 
-    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener(cursorMoveEventType, onCursorMove);
 
     this.draggedCardNode.addEventListener(
-      'mouseup',
+      cursorEndEventType,
       () => {
         if (!this.draggedCardNode) {
           return;
@@ -626,7 +654,7 @@ export default class PuzzleMainComponent extends BaseComponent {
 
         this.handleDrop(startingPlaceData, draggedCard);
         this.draggedCardNode.style.cursor = '';
-        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener(cursorMoveEventType, onCursorMove);
       },
       { once: true },
     );
@@ -671,7 +699,7 @@ export default class PuzzleMainComponent extends BaseComponent {
       }
     }
 
-    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentfromNode(this.currentDropPlace);
+    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentFromNode(this.currentDropPlace);
 
     if (!dropPlace) {
       return;
@@ -704,7 +732,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.removeCardsClasses();
     startingPlaceData.place.cleanComponentChildrenList();
 
-    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentfromNode(this.currentDropPlace);
+    const { place: dropPlace, index: dropPlaceNumber } = this.findPlaceComponentFromNode(this.currentDropPlace);
 
     if (!dropPlace) {
       return;
@@ -744,7 +772,7 @@ export default class PuzzleMainComponent extends BaseComponent {
     this.draggedCardNode.style.top = ``;
   }
 
-  private findPlaceComponentfromNode = (node: Element): { place: BaseComponent | null; index: number } => {
+  private findPlaceComponentFromNode = (node: Element): { place: BaseComponent | null; index: number } => {
     if (!node) {
       return { place: null, index: -1 };
     }
@@ -770,17 +798,19 @@ export default class PuzzleMainComponent extends BaseComponent {
     return { place: null, index: -1 };
   };
 
-  private createMouseMoveHandler(shiftX: number, shiftY: number): (evt: MouseEvent) => void {
-    return (evt: MouseEvent) => {
-      if (!this.draggedCardNode) {
+  private createCursorMoveHandler(shiftX: number, shiftY: number): (evt: MouseEvent | TouchEvent) => void {
+    return (evt: MouseEvent | TouchEvent) => {
+      const cursorData = evt instanceof MouseEvent ? evt : evt.changedTouches[0];
+
+      if (!this.draggedCardNode || !cursorData) {
         return;
       }
 
-      this.draggedCardNode.style.left = `${evt.pageX - shiftX}px`;
-      this.draggedCardNode.style.top = `${evt.pageY - shiftY}px`;
+      this.draggedCardNode.style.left = `${cursorData.pageX - shiftX}px`;
+      this.draggedCardNode.style.top = `${cursorData.pageY - shiftY}px`;
       this.draggedCardNode.style.display = 'none';
 
-      const underNode = document.elementFromPoint(evt.clientX, evt.clientY);
+      const underNode = document.elementFromPoint(cursorData.clientX, cursorData.clientY);
 
       this.draggedCardNode.style.display = '';
 
@@ -812,125 +842,6 @@ export default class PuzzleMainComponent extends BaseComponent {
 
       cardNode.ondragstart = (): boolean => false;
     });
-  }
-
-  private touchDragHandler = (evt: TouchEvent): void => {
-    const initialTouchMoveHandler = this.createInitialTouchMoveHandler(evt);
-
-    document.addEventListener(
-      'touchend',
-      () => {
-        document.removeEventListener('touchmove', initialTouchMoveHandler);
-      },
-      { once: true },
-    );
-
-    document.addEventListener('touchmove', initialTouchMoveHandler, { once: true });
-  };
-
-  private createInitialTouchMoveHandler =
-    (touchStartEvt: TouchEvent): (() => void) =>
-    () => {
-      const touch = touchStartEvt.changedTouches[0];
-
-      this.draggedCardNode = getClosestFromTouchEventTarget(touch, '.card--active');
-
-      if (!this.draggedCardNode || !touch) {
-        return;
-      }
-
-      const draggedNodeRect = this.draggedCardNode.getBoundingClientRect();
-      const shiftX = touch.clientX - draggedNodeRect.left;
-      const shiftY = touch.clientY - draggedNodeRect.top;
-      const startingPlaceNode = this.draggedCardNode.parentElement;
-
-      if (!startingPlaceNode) {
-        return;
-      }
-
-      const startingPlaceData = this.findPlaceComponentfromNode(startingPlaceNode);
-      const draggedCard = this.cards.find((cardsItem) => cardsItem.getNode() === this.draggedCardNode);
-
-      if (!draggedCard) {
-        return;
-      }
-
-      this.draggedCardNode.style.position = 'absolute';
-      this.draggedCardNode.style.touchAction = 'none';
-      this.draggedCardNode.style.zIndex = '10';
-      this.draggedCardNode.style.left = `${touch.pageX - shiftX}px`;
-      this.draggedCardNode.style.top = `${touch.pageY - shiftY}px`;
-      document.body.append(this.draggedCardNode);
-      this.currentDropPlace = null;
-      this.addTouchHandlers(shiftX, shiftY, startingPlaceData, draggedCard);
-    };
-
-  private addTouchHandlers = (
-    shiftX: number,
-    shiftY: number,
-    startingPlaceData: { place: BaseComponent | null; index: number },
-    draggedCard: PuzzleCard,
-  ): void => {
-    if (!this.draggedCardNode) {
-      return;
-    }
-
-    const onTouchMove = this.createTouchMoveHandler(shiftX, shiftY);
-
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-
-    this.draggedCardNode.addEventListener(
-      'touchend',
-      () => {
-        if (!this.draggedCardNode) {
-          return;
-        }
-
-        if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('drop-place--hover');
-        }
-
-        this.handleDrop(startingPlaceData, draggedCard);
-        document.removeEventListener('touchmove', onTouchMove);
-      },
-      { once: true },
-    );
-  };
-
-  private createTouchMoveHandler(shiftX: number, shiftY: number): (evt: TouchEvent) => void {
-    return (touchEvent: TouchEvent) => {
-      const touch = touchEvent.changedTouches[0];
-
-      if (!this.draggedCardNode || !touch) {
-        return;
-      }
-
-      this.draggedCardNode.style.left = `${touch.pageX - shiftX}px`;
-      this.draggedCardNode.style.top = `${touch.pageY - shiftY}px`;
-      this.draggedCardNode.style.display = 'none';
-
-      const underNode = document.elementFromPoint(touch.clientX, touch.clientY);
-
-      this.draggedCardNode.style.display = '';
-
-      if (!underNode) {
-        return;
-      }
-
-      const enteredDropPlace = underNode.closest('.drop-place');
-
-      if (this.currentDropPlace !== enteredDropPlace) {
-        if (this.currentDropPlace) {
-          this.currentDropPlace.classList.remove('drop-place--hover');
-        }
-
-        this.currentDropPlace = enteredDropPlace;
-
-        if (this.currentDropPlace) {
-          this.currentDropPlace.classList.add('drop-place--hover');
-        }
-      }
-    };
   }
 
   private showTranslation(): void {
@@ -966,6 +877,14 @@ export default class PuzzleMainComponent extends BaseComponent {
       buttonType: 'button',
     });
 
+    const onPronounceClick = this.createOnPronounceClick(pronounceButton);
+
+    pronounceButton.addListener('click', onPronounceClick);
+
+    return pronounceButton;
+  };
+
+  private createOnPronounceClick = (pronounceButton: BaseComponent<HTMLButtonElement>): (() => void) => {
     const onPronounceClick = (): void => {
       const currentSentenceData = this.sentences[this.currentSentenceNumber];
       let currentAudioURL = currentSentenceData?.audioExample;
@@ -990,9 +909,6 @@ export default class PuzzleMainComponent extends BaseComponent {
         })
         .catch(() => {});
     };
-
-    pronounceButton.addListener('click', onPronounceClick);
-
-    return pronounceButton;
+    return onPronounceClick;
   };
 }

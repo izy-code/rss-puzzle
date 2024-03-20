@@ -5,7 +5,6 @@ import { div, span } from '@/app/components/tags';
 import { Pages } from '@/app/router/pages';
 import type Router from '@/app/router/router';
 import { dispatchCustomEvent } from '@/app/utils';
-import type JsonLoader from '@/app/utils/json-loader';
 import type LocalStorage from '@/app/utils/local-storage';
 
 export default class PuzzleHeaderComponent extends BaseComponent {
@@ -13,32 +12,19 @@ export default class PuzzleHeaderComponent extends BaseComponent {
 
   private storage: LocalStorage;
 
-  private pageNumber: number;
-
-  private levelNumber: number;
-
-  private translateButton: BaseComponent<HTMLButtonElement>;
-
-  private pronounceButton: BaseComponent<HTMLButtonElement>;
-
-  private startButton: BaseComponent<HTMLButtonElement>;
-
-  constructor(router: Router, storage: LocalStorage, loader: JsonLoader, levelNumber: number, pageNumber: number) {
+  constructor(router: Router, storage: LocalStorage) {
     super({ className: 'puzzle-page__header header', tag: 'header' });
 
     this.router = router;
     this.storage = storage;
-    this.pageNumber = pageNumber;
-    this.levelNumber = levelNumber;
 
     const buttonsContainer = div({ className: 'header__buttons-container' });
+    const startButton = this.createStartButton();
+    const translateButton = this.createTranslationButton();
+    const pronounceButton = this.createPronounceButton();
 
-    this.startButton = this.createStartButton();
-    this.translateButton = this.createTranslationButton();
-    this.pronounceButton = this.createPronounceButton();
-
-    buttonsContainer.appendChildren([this.translateButton, this.pronounceButton]);
-    this.appendChildren([this.startButton, buttonsContainer]);
+    buttonsContainer.appendChildren([translateButton, pronounceButton]);
+    this.appendChildren([startButton, buttonsContainer]);
   }
 
   private createTranslationButton(): BaseComponent<HTMLButtonElement> {
