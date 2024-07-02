@@ -20,6 +20,7 @@
     "start": "tsx node_modules/webpack/bin/webpack serve --mode=development --node-env=development",
     "prepare": "cd .. && husky rss-puzzle/.husky"
   },
+  "author": "izy-code",
   "contributors": [
     "Sergey Koksharov <gentoosiastic@gmail.com>"
   ],
