@@ -67,7 +67,7 @@ export default class StartPageComponent extends BaseComponent {
       textContent: `${name} ${surname}`,
     });
     const greetingEnding = document.createTextNode(
-      '! Embark on your journey with Word Puzzle and unlock the joy of wordplay and visual discovery!',
+      '! Embark on your journey with Word Puzzle and unlock the joy of wordplay!',
     );
     const greeting = p(
       {
@@ -89,7 +89,7 @@ export default class StartPageComponent extends BaseComponent {
     });
     const descriptionPart2 = p({
       className: 'start-page__description',
-      textContent: 'Complete the puzzle to reveal the full picture and triumph in each round!',
+      textContent: 'Complete the puzzle to triumph in each round!',
     });
     const descriptionPart3 = p({
       className: 'start-page__description',
